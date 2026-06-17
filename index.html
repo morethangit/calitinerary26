@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#4285F4" id="themeColorMeta" />
+  <title>California Road Trip · July 2026</title>
+  <meta name="description" content="Our family California road trip — daily schedule, stops, food, and links." />
+
+  <!-- Fun, rounded, Google-ish type -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌅</text></svg>" />
+</head>
+<body>
+
+  <!-- ============ PRE-TRIP COUNTDOWN GATE ============ -->
+  <section id="gate" class="gate" hidden>
+    <div class="gate-inner">
+      <div class="gate-emoji">🌴</div>
+      <h1 class="gate-title">Your trip starts in</h1>
+      <div class="gate-count"><span id="gateNumber">0</span><span class="gate-unit" id="gateUnit">days</span></div>
+      <p class="gate-sub" id="gateSub">California Road Trip · July 16, 2026</p>
+      <button class="gate-btn" id="previewBtn">Peek at the itinerary →</button>
+    </div>
+  </section>
+
+  <!-- ============ PASSCODE UNLOCK SCREEN ============ -->
+  <section id="lock" class="gate lock" hidden>
+    <div class="gate-inner">
+      <div class="gate-emoji">🔒</div>
+      <h1 class="gate-title">Family itinerary</h1>
+      <p class="gate-sub">Enter the trip passcode to view the schedule.</p>
+      <form id="lockForm" class="lock-form" autocomplete="off">
+        <input id="lockInput" class="lock-input" type="password" inputmode="text"
+               placeholder="Passcode" aria-label="Trip passcode" autocomplete="off" />
+        <button class="gate-btn" type="submit" id="lockBtn">Unlock</button>
+      </form>
+      <p class="lock-error" id="lockError" hidden>That passcode didn't work — try again.</p>
+    </div>
+  </section>
+
+  <!-- ============ MAIN APP ============ -->
+  <main id="app" class="app" hidden>
+    <div id="dayContainer" class="day-container">
+      <!-- a day card is rendered here by app.js -->
+    </div>
+  </main>
+
+  <!-- ============ ANCHORED BOTTOM NAV BAR ============ -->
+  <nav id="bottomBar" class="bottom-bar" hidden aria-label="Day navigation">
+    <button class="bb-arrow" id="prevDay" aria-label="Previous day">‹</button>
+    <button class="bb-center" id="bbCenter">
+      <span class="bb-day" id="bbDay">Day 1</span>
+      <span class="bb-date" id="bbDate">Thursday, July 16</span>
+    </button>
+    <button class="bb-arrow" id="nextDay" aria-label="Next day">›</button>
+  </nav>
+
+  <script src="data.js"></script>
+  <script src="data.enc.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

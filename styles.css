@@ -1,0 +1,464 @@
+/* ============================================================================
+   CALIFORNIA ROAD TRIP — STYLES
+   Mobile-first, rounded, bright, Google-ish.
+   You rarely need to touch this file to change the trip — edit data.js instead.
+   To tweak a location's COLOR, find its theme block near the bottom (--accent etc).
+   ========================================================================== */
+
+:root {
+  --bg: #f6f8fc;
+  --card: #ffffff;
+  --ink: #1f2430;
+  --ink-soft: #5b6472;
+  --line: #e8ecf3;
+  --shadow: 0 6px 24px rgba(31, 36, 48, 0.08);
+  --shadow-lg: 0 14px 40px rgba(31, 36, 48, 0.14);
+  --radius: 22px;
+  --radius-sm: 14px;
+  --bar-h: 74px;
+
+  /* default theme (overridden per-day) */
+  --accent: #4285f4;
+  --accent-ink: #1a56c4;
+  --accent-soft: #eaf1fe;
+  --grad-a: #4285f4;
+  --grad-b: #5b9dff;
+}
+
+* { box-sizing: border-box; }
+
+/* The `hidden` attribute must always win, even over .gate/.bottom-bar display rules. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button { font-family: inherit; cursor: pointer; }
+a { color: inherit; }
+
+/* ============================ COUNTDOWN GATE ============================ */
+.gate {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 24px;
+  background: radial-gradient(120% 90% at 50% 0%, #cfe1ff 0%, #f6f8fc 55%);
+  z-index: 50;
+  animation: fadeIn 0.5s ease both;
+}
+.gate-inner { max-width: 440px; width: 100%; }
+.gate-emoji { font-size: 64px; animation: floaty 3s ease-in-out infinite; }
+.gate-title {
+  font-family: "Fredoka", sans-serif;
+  font-weight: 600;
+  font-size: 1.9rem;
+  margin: 6px 0 4px;
+  color: var(--ink);
+}
+.gate-count {
+  font-family: "Fredoka", sans-serif;
+  font-weight: 700;
+  line-height: 1;
+  margin: 10px 0;
+  background: linear-gradient(120deg, #4285f4, #ea4335 55%, #fbbc04);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.gate-count #gateNumber { font-size: 6.5rem; display: inline-block; }
+.gate-unit { font-size: 2rem; margin-left: 8px; }
+.gate-sub { color: var(--ink-soft); font-size: 1.05rem; margin: 6px 0 26px; }
+.gate-btn {
+  border: none;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 14px 26px;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.gate-btn:active { transform: scale(0.96); }
+.gate-btn:hover { box-shadow: var(--shadow-lg); }
+
+/* ============================ UNLOCK SCREEN ============================ */
+.lock { background: radial-gradient(120% 90% at 50% 0%, #e3ebfb 0%, #f6f8fc 55%); }
+.lock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 320px;
+  margin: 22px auto 0;
+}
+.lock-input {
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 15px 18px;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.lock-input:focus { border-color: #4285f4; box-shadow: 0 0 0 4px #e9f1fe; }
+.lock-form .gate-btn { width: 100%; background: #4285f4; }
+.lock-error { color: #d93025; font-weight: 700; margin-top: 14px; animation: fadeIn 0.2s ease; }
+.lock.shake .gate-inner { animation: shake 0.4s ease; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%,60% { transform: translateX(-8px); }
+  40%,80% { transform: translateX(8px); }
+}
+
+/* ============================ APP / DAY CARD ============================ */
+.app {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 14px calc(var(--bar-h) + 28px);
+  min-height: 100vh;
+}
+
+.day-container { position: relative; }
+
+/* slide animation between days */
+@keyframes slideInRight { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideInLeft  { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes pop { 0% { transform: scale(0.96); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+.day { animation: pop 0.32s cubic-bezier(.2,.8,.2,1) both; }
+.day.from-right { animation: slideInRight 0.34s cubic-bezier(.2,.8,.2,1) both; }
+.day.from-left  { animation: slideInLeft 0.34s cubic-bezier(.2,.8,.2,1) both; }
+
+/* ---- Day header (themed hero) ---- */
+.hero {
+  position: relative;
+  margin-top: 16px;
+  border-radius: var(--radius);
+  padding: 22px 22px 24px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--grad-a), var(--grad-b));
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -40px; top: -40px;
+  width: 180px; height: 180px;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.22);
+  padding: 6px 12px;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+}
+.hero-today {
+  margin-left: 6px;
+  background: #fff;
+  color: var(--accent-ink);
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+}
+.hero h1 {
+  font-family: "Fredoka", sans-serif;
+  font-weight: 600;
+  font-size: 1.85rem;
+  line-height: 1.12;
+  margin: 14px 0 8px;
+  position: relative;
+}
+.hero-tagline { font-size: 1.02rem; opacity: 0.95; margin: 0 0 16px; position: relative; }
+.hero-meta { display: flex; flex-direction: column; gap: 8px; position: relative; }
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 9px 14px;
+  border-radius: 14px;
+  text-decoration: none;
+  width: fit-content;
+  max-width: 100%;
+  transition: transform 0.15s ease;
+}
+.hero-chip:active { transform: scale(0.97); }
+.hero-chip .ic { font-size: 1.05rem; }
+.hero-chip.linkish::after { content: "↗"; font-size: 0.8rem; opacity: 0.5; }
+
+/* ---- Sections ---- */
+.section { margin-top: 20px; animation: fadeIn 0.5s ease both; }
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 4px 11px;
+}
+.section-head .dot {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--accent);
+}
+.section-head h2 {
+  font-family: "Fredoka", sans-serif;
+  font-weight: 600;
+  font-size: 1.18rem;
+  margin: 0;
+  color: var(--ink);
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+}
+
+/* Schedule timeline */
+.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline li {
+  position: relative;
+  padding: 0 0 16px 26px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: 4px; top: 5px;
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.timeline li::after {
+  content: "";
+  position: absolute;
+  left: 9px; top: 20px; bottom: -2px;
+  width: 2px;
+  background: var(--line);
+}
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li:last-child::after { display: none; }
+
+/* Location chips/cards */
+.loc-list { display: grid; gap: 10px; }
+.loc {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 13px 14px;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform 0.14s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.loc.is-link:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.loc.is-link:active { transform: scale(0.98); }
+.loc-ic {
+  flex: none;
+  width: 42px; height: 42px;
+  display: grid; place-items: center;
+  font-size: 1.3rem;
+  background: var(--accent-soft);
+  border-radius: 12px;
+}
+.loc-body { flex: 1; min-width: 0; }
+.loc-name { font-weight: 800; font-size: 1.0rem; display: flex; align-items: center; gap: 6px; }
+.loc-name .go { font-size: 0.78rem; color: var(--accent-ink); font-weight: 700; }
+.loc-note { color: var(--ink-soft); font-size: 0.9rem; margin-top: 2px; line-height: 1.4; }
+
+/* Links list */
+.link-list { display: grid; gap: 9px; }
+.link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-weight: 700;
+  padding: 13px 16px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: transform 0.14s ease, filter 0.2s ease;
+}
+.link-row:active { transform: scale(0.98); }
+.link-row:hover { filter: brightness(0.97); }
+.link-row::after { content: "↗"; opacity: 0.6; }
+
+/* Tips */
+.tips { display: grid; gap: 10px; }
+.tip {
+  display: flex;
+  gap: 11px;
+  background: #fffaf0;
+  border: 1.5px solid #ffe9bd;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  line-height: 1.45;
+  color: #5a4a22;
+  font-size: 0.95rem;
+}
+.tip .tip-ic { flex: none; }
+
+/* Fun fact */
+.funfact {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, var(--accent-soft), #ffffff);
+  border: 1.5px dashed var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 13px 16px;
+  text-decoration: none;
+  color: var(--accent-ink);
+  transition: transform 0.14s ease;
+}
+.funfact:active { transform: scale(0.99); }
+.funfact .ff-ic { font-size: 1.4rem; flex: none; }
+.funfact .ff-body { flex: 1; }
+.funfact .ff-label { font-weight: 800; font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.7; }
+.funfact .ff-q { font-weight: 700; line-height: 1.35; }
+.funfact .ff-go { font-size: 1.1rem; opacity: 0.6; }
+
+/* Confirmations (collapsible) */
+.confs { margin-top: 18px; }
+.confs summary {
+  list-style: none;
+  cursor: pointer;
+  font-weight: 800;
+  color: var(--ink-soft);
+  padding: 13px 16px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.confs summary::-webkit-details-marker { display: none; }
+.confs summary::after { content: "▾"; transition: transform 0.2s ease; }
+.confs[open] summary::after { transform: rotate(180deg); }
+.conf-list { margin: 8px 2px 0; display: grid; gap: 8px; }
+.conf-item {
+  display: flex; flex-direction: column;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.conf-label { font-size: 0.78rem; color: var(--ink-soft); font-weight: 700; }
+.conf-value { font-weight: 800; font-size: 0.98rem; letter-spacing: 0.01em; word-break: break-word; }
+
+/* ============================ BOTTOM BAR ============================ */
+.bottom-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: calc(var(--bar-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 10px; padding-right: 10px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: saturate(180%) blur(14px);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -6px 24px rgba(31, 36, 48, 0.07);
+  z-index: 40;
+}
+.bb-arrow {
+  flex: none;
+  width: 50px; height: 50px;
+  border: none;
+  border-radius: 16px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 1.7rem;
+  line-height: 1;
+  display: grid; place-items: center;
+  transition: transform 0.14s ease, background 0.2s ease, opacity 0.2s ease;
+}
+.bb-arrow:active { transform: scale(0.9); }
+.bb-arrow:disabled { opacity: 0.32; cursor: default; }
+.bb-center {
+  flex: 1;
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 6px;
+  border-radius: 14px;
+}
+.bb-day {
+  font-family: "Fredoka", sans-serif;
+  font-weight: 600;
+  font-size: 1.12rem;
+  color: var(--accent-ink);
+}
+.bb-date { font-size: 0.82rem; color: var(--ink-soft); font-weight: 700; }
+
+/* ============================ LOCATION THEMES ============================ */
+/* Each day's "theme" in data.js maps to one of these palettes.
+   To recolor a place, change the numbers here. */
+
+[data-theme="anaheim"] {           /* Disney — Google blue */
+  --accent: #4285f4; --accent-ink: #1856c4; --accent-soft: #e9f1fe;
+  --grad-a: #4285f4; --grad-b: #5b9dff;
+}
+[data-theme="pismo"] {             /* Pismo Beach — sunny yellow */
+  --accent: #f5a700; --accent-ink: #9a6a00; --accent-soft: #fff4d6;
+  --grad-a: #fbbc04; --grad-b: #ffcf4d;
+}
+[data-theme="bigsur"] {            /* Big Sur / Monterey — orange */
+  --accent: #ff7a3d; --accent-ink: #c2461a; --accent-soft: #ffeadf;
+  --grad-a: #ff7043; --grad-b: #ff9558;
+}
+[data-theme="yosemite"] {          /* Yosemite — forest green */
+  --accent: #34a853; --accent-ink: #1f7a39; --accent-soft: #e4f6e9;
+  --grad-a: #34a853; --grad-b: #5cc578;
+}
+[data-theme="sf"] {                /* San Francisco — Golden Gate red */
+  --accent: #ea4335; --accent-ink: #b32418; --accent-soft: #fde9e7;
+  --grad-a: #ea4335; --grad-b: #ff6f61;
+}
+
+/* ============================ DESKTOP POLISH ============================ */
+@media (min-width: 560px) {
+  .hero h1 { font-size: 2.1rem; }
+  .loc-list { grid-template-columns: 1fr 1fr; }
+  .loc.full { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; }
+}

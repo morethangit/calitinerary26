@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "trip",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "serve", "--no-clipboard", "-l", "4322", "."],
+      "port": 4322
+    }
+  ]
+}
