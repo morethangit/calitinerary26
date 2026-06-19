@@ -1,32 +1,31 @@
 /* ============================================================================
-   CALIFORNIA ROAD TRIP — ITINERARY DATA
+   CALIFORNIA ROAD TRIP — ITINERARY DATA  (the file you edit)
    ============================================================================
-   This is the main file you edit to change the trip.
-   Everything visible on the website (except confirmation numbers) is built here.
+   ⚠ THIS FILE IS THE PRIVATE SOURCE. It is NOT deployed to the website.
+   After editing, run:   node encrypt.mjs <passcode>
+   …which encrypts everything into data.enc.js (the only data the site ships)
+   and refreshes config.js (the public countdown info). See README.md.
 
-   ⚠ CONFIRMATION NUMBERS ARE NOT IN THIS FILE.
-   They are private and live (in plain text) in  secrets.plain.json , then get
-   encrypted into  data.enc.js  for the website. To edit them, open
-   secrets.plain.json and follow the instructions at the top of that file.
-
-   HOW TO EDIT THIS FILE (no coding experience needed):
+   HOW TO EDIT (no coding experience needed):
    • Find the day you want to change.
    • Edit the text between the "quotes". Keep the quotes and the commas.
    • To add a bullet, copy an existing line and change the text.
-   • Save the file. That's it — the website updates automatically.
+   • Save, then run the encrypt command above.
 
-   LINK SHORTCUTS — for any item you can add ONE of these:
+   SCHEDULE BULLETS — two ways to write each one:
+       "Walk the pier at sunset"                        ← no time
+       { time: "9:00 AM", text: "Rope drop at the park" } ← clock time
+       { time: "Afternoon", text: "Beach day" }           ← general time
+   Use whichever you like, mixed freely. No "time" = no time label.
+
+   LINK SHORTCUTS — add ONE of these to any location:
        map:  "Splash Cafe Pismo Beach"   → opens that place in Google Maps
        trail:"Mist Trail Yosemite"        → opens that hike on AllTrails
        url:  "https://anything.com"       → opens that exact web address
-   If you add none of them, the item just shows as plain text.
 
-   ICONS you can use for a location's "icon":
-       food 🍽   stay 🏨   beach 🏖   hike 🥾   sight 📸   car 🚗
-       park 🎢   wine 🍷   info ℹ️   plane ✈️   star ⭐
-       (or paste any emoji you like)
+   CONFIRMATION NUMBERS live in secrets.plain.json (also private, not deployed).
 
-   THEMES set the color of each day. Available:
+   THEMES set each day's color:
        anaheim (blue) · pismo (yellow) · bigsur (orange)
        yosemite (green) · sf (red)
    ========================================================================== */
@@ -53,9 +52,9 @@ const TRIP = {
       schedule: [
         "Fly into LAX — collect luggage, grab the rental car or rideshare",
         "Drive or ride to Anaheim — check into the Marriott",
-        "Dinner near the hotel — rest up for rope drop tomorrow",
-        "Download the Disneyland app tonight & activate Lightning Lane Multi Pass",
-        "Set alarms early — target the park by 8–9am for rope drop",
+        { time: "Evening", text: "Dinner near the hotel — rest up for rope drop tomorrow" },
+        { time: "Tonight", text: "Download the Disneyland app & activate Lightning Lane Multi Pass" },
+        { time: "Tonight", text: "Set alarms early — target the park by 8–9am for rope drop" },
       ],
 
       locations: [
@@ -89,13 +88,13 @@ const TRIP = {
       drive: "Park hours ~8am–midnight (check the app the night before)",
 
       schedule: [
-        "Rope drop at Disneyland (8–9am) — book a Lightning Lane the moment you tap in",
-        "Morning priority: Indiana Jones Adventure (not at WDW!), Matterhorn, Space Mountain",
-        "Mid-morning: Haunted Mansion + Pirates of the Caribbean (Walt's original — better than WDW's)",
-        "Star Wars: Galaxy's Edge before the afternoon crowds hit",
-        "Hop to DCA mid-afternoon — Radiator Springs Racers is Priority #1 in the whole park",
-        "DCA afternoon: Guardians Mission Breakout, Incredicoaster, Web-Slingers, Soarin'",
-        "End the night at DCA for World of Color (check the show schedule in the app)",
+        { time: "8 AM", text: "Rope drop at Disneyland — book a Lightning Lane the moment you tap in" },
+        { time: "Morning", text: "Priority rides: Indiana Jones Adventure (not at WDW!), Matterhorn, Space Mountain" },
+        { time: "Mid-morning", text: "Haunted Mansion + Pirates of the Caribbean" },
+        { time: "Late morning", text: "Star Wars: Galaxy's Edge before the afternoon crowds hit" },
+        { time: "Mid-afternoon", text: "Hop to DCA — Radiator Springs Racers is Priority #1 in the whole park" },
+        { time: "Afternoon", text: "DCA: Guardians Mission Breakout, Incredicoaster, Web-Slingers, Soarin'" },
+        { time: "Evening", text: "End the night at DCA for World of Color (check the show schedule in the app)" },
       ],
 
       locations: [
@@ -131,11 +130,11 @@ const TRIP = {
       drive: "Anaheim → Pismo Beach via US-101 N (~3 hrs · easy & flat)",
 
       schedule: [
-        "Check out from the Marriott",
+        { time: "Morning", text: "Check out from the Marriott" },
         "Drive north on US-101 — a straight shot, no major stops needed",
-        "Check into the VRBO — drop bags, walk to Pismo State Beach (wide, clean, gorgeous in July)",
-        "Afternoon: beach time, settle in",
-        "Evening: walk the Pismo pier at sunset",
+        { time: "Afternoon", text: "Check into the VRBO — drop bags, walk to Pismo State Beach (wide, clean, gorgeous in July)" },
+        { time: "Afternoon", text: "Beach time, settle in" },
+        { time: "Evening", text: "Walk the Pismo pier at sunset" },
       ],
 
       locations: [
@@ -167,9 +166,9 @@ const TRIP = {
       drive: "All local — beach and dunes are minutes away",
 
       schedule: [
-        "Morning: Oceano Dunes SVRA — rent ATVs/OHVs and tear across massive sand dunes",
-        "Afternoon: Pismo State Beach — swimming, boogie boards, volleyball",
-        "Early evening: walk the Pismo Beach pier at sunset",
+        { time: "Morning", text: "Oceano Dunes SVRA — rent ATVs/OHVs and tear across massive sand dunes" },
+        { time: "Afternoon", text: "Pismo State Beach — swimming, boogie boards, volleyball" },
+        { time: "Early evening", text: "Walk the Pismo Beach pier at sunset" },
       ],
 
       locations: [
@@ -202,10 +201,10 @@ const TRIP = {
       drive: "Rest day — no driving required",
 
       schedule: [
-        "Full relaxed beach day — Pismo State Beach, no agenda",
-        "Optional: Edna Valley wine tasting (~15 min inland — beautiful, great for the adults)",
-        "Optional: kayak or paddleboard rental in Avila Beach (just north of Pismo)",
-        "Pack tonight — tomorrow is a long, scenic drive-through day to Monterey",
+        { time: "All day", text: "Full relaxed beach day — Pismo State Beach, no agenda" },
+        { time: "Optional", text: "Edna Valley wine tasting (~15 min inland — beautiful, great for the adults)" },
+        { time: "Optional", text: "Kayak or paddleboard rental in Avila Beach (just north of Pismo)" },
+        { time: "Tonight", text: "Pack — tomorrow is a long, scenic drive-through day to Monterey" },
       ],
 
       locations: [
@@ -237,13 +236,13 @@ const TRIP = {
       drive: "Pismo → Monterey via Hwy 1 (~130 mi · budget 4–5 hrs with stops)",
 
       schedule: [
-        "Early start — this is a drive-and-stop day, take your time",
-        "Stop: Elephant Seals at Piedras Blancas (just north of Cambria) — hundreds of seals on the beach",
-        "Stop: Bixby Bridge — pull over on the north side for the classic shot",
-        "Stop: McWay Falls (Julia Pfeiffer Burns SP) — turquoise waterfall onto a cove beach, 10-min walk",
-        "Optional hike: Pfeiffer Falls trail through old-growth redwood canyon (1.4 mi)",
-        "Arrive Monterey by late afternoon — check into Embassy Suites",
-        "Walk Cannery Row — the waterfront lights are beautiful at night",
+        { time: "Early", text: "Start early — this is a drive-and-stop day, take your time" },
+        { time: "Stop", text: "Elephant Seals at Piedras Blancas (north of Cambria) — hundreds of seals on the beach" },
+        { time: "Stop", text: "Bixby Bridge — pull over on the north side for the classic shot" },
+        { time: "Stop", text: "McWay Falls (Julia Pfeiffer Burns SP) — turquoise waterfall onto a cove beach, 10-min walk" },
+        { time: "Optional", text: "Pfeiffer Falls trail through old-growth redwood canyon (1.4 mi)" },
+        { time: "Late afternoon", text: "Arrive Monterey — check into Embassy Suites" },
+        { time: "Evening", text: "Walk Cannery Row — the waterfront lights are beautiful at night" },
       ],
 
       locations: [
@@ -282,13 +281,13 @@ const TRIP = {
       drive: "Monterey → Midpines via US-101 → CA-140 (~3.5 hrs). Enter at Hwy 140 / Arch Rock — no reservations in 2026.",
 
       schedule: [
-        "Early Point Lobos hike — Cypress Grove + Bird Island Trails (~1.5 hrs), then back to the hotel",
-        "Check out from Embassy Suites — load the car",
-        "Drive east through the Sierra foothills on CA-140 — beautiful valley entrance",
+        { time: "Early AM", text: "Point Lobos hike — Cypress Grove + Bird Island Trails (~1.5 hrs), then back to the hotel" },
+        { time: "Morning", text: "Check out from Embassy Suites — load the car" },
+        { time: "Midday", text: "Drive east through the Sierra foothills on CA-140 — beautiful valley entrance" },
         "Grab groceries at Pioneer Supermarket in Mariposa",
-        "Check into the Midpines VRBO — Hwy 140 is the best base for Yosemite Valley access",
-        "Evening: drive into Yosemite Valley for first views — El Capitan & Half Dome at dusk (Valley View or Tunnel View)",
-        "No hiking tonight — rest up for the big day tomorrow",
+        { time: "Afternoon", text: "Check into the Midpines VRBO — Hwy 140 is the best base for Yosemite Valley access" },
+        { time: "Evening", text: "Drive into Yosemite Valley for first views — El Capitan & Half Dome at dusk (Valley View or Tunnel View)" },
+        { time: "Tonight", text: "No hiking — rest up for the big day tomorrow" },
       ],
 
       locations: [
@@ -323,11 +322,11 @@ const TRIP = {
       drive: "~6 mi round trip · ~2,000 ft gain · bring water, snacks & grip shoes",
 
       schedule: [
-        "Be at the Happy Isles trailhead by 7:30–8am — beat the crowds and the heat",
-        "Hike the Mist Trail to Vernal Falls, then up to Nevada Falls (granite steps get soaked — grip shoes essential)",
-        "Optional afternoon: Mirror Lake loop if legs allow — flat and easy",
-        "Evening: stay in and grill at the VRBO — big-hike recovery",
-        "Pack gear for Tuolumne tomorrow — you'll start even earlier",
+        { time: "7:30–8 AM", text: "Be at the Happy Isles trailhead — beat the crowds and the heat" },
+        { time: "Morning", text: "Mist Trail to Vernal Falls, then up to Nevada Falls (granite steps get soaked — grip shoes essential)" },
+        { time: "Afternoon", text: "Optional: Mirror Lake loop if legs allow — flat and easy" },
+        { time: "Evening", text: "Stay in and grill at the VRBO — big-hike recovery" },
+        { time: "Tonight", text: "Pack gear for Tuolumne tomorrow — you'll start even earlier" },
       ],
 
       locations: [
@@ -358,11 +357,11 @@ const TRIP = {
       drive: "~1.5 hrs up to the meadows via Tioga Road — 8,600 ft elevation",
 
       schedule: [
-        "Start early — afternoon thunderstorms are common at elevation in July",
-        "Main hike: Cathedral Lakes (7.4 mi RT, moderate-strenuous) — alpine lakes below a spired granite peak",
-        "Optional instead: Lembert Dome (2.8 mi, moderate) — panoramic views over the meadows",
-        "Meadow walk: Tuolumne Meadows visitor area — flat stroll and cold, perfect river swimming",
-        "Back to the VRBO — last night in Midpines, pack bags for SF tomorrow",
+        { time: "Early", text: "Start early — afternoon thunderstorms are common at elevation in July" },
+        { time: "Morning", text: "Main hike: Cathedral Lakes (7.4 mi RT, moderate-strenuous) — alpine lakes below a spired granite peak" },
+        { time: "Alt", text: "Optional instead: Lembert Dome (2.8 mi, moderate) — panoramic views over the meadows" },
+        { time: "Afternoon", text: "Meadow walk: Tuolumne Meadows — flat stroll and cold, perfect river swimming" },
+        { time: "Evening", text: "Back to the VRBO — last night in Midpines, pack bags for SF tomorrow" },
       ],
 
       locations: [
@@ -396,12 +395,12 @@ const TRIP = {
       drive: "Midpines → SF via CA-120 → I-205W → I-580 (~4.5 hrs with the morning hike)",
 
       schedule: [
-        "Leave the VRBO by 6:15–6:30am for the Sentinel Dome trailhead",
-        "Hike Sentinel Dome + Taft Point (Glacier Point Rd) — 360° views from one of Yosemite's most accessible summits",
-        "Stop at Tuolumne Grove sequoias on the way out to stretch your legs (2.5 mi RT)",
-        "One last look at Tunnel View, then drive west toward San Francisco",
-        "Check into the Hilton SF (near Union Square — walkable to everything)",
-        "Afternoon: Fisherman's Wharf → Ghirardelli Square → walk the Embarcadero waterfront",
+        { time: "6:15 AM", text: "Leave the VRBO for the Sentinel Dome trailhead" },
+        { time: "Morning", text: "Hike Sentinel Dome + Taft Point (Glacier Point Rd) — 360° views of the whole park" },
+        { time: "Late morning", text: "Stop at Tuolumne Grove sequoias on the way out (2.5 mi RT)" },
+        { time: "Midday", text: "One last look at Tunnel View, then drive west toward San Francisco" },
+        { time: "Afternoon", text: "Check into the Hilton SF (near Union Square — walkable to everything)" },
+        { time: "Evening", text: "Fisherman's Wharf → Ghirardelli Square → walk the Embarcadero waterfront" },
       ],
 
       locations: [
@@ -439,12 +438,12 @@ const TRIP = {
       drive: "BART from Powell St or Embarcadero → SFO (~30 min, $9/person). Far easier than Uber for 5 with bags.",
 
       schedule: [
-        "Sleep in a bit, then check out and store luggage at the bell desk",
-        "Golden Gate Park: California Academy of Sciences — aquarium, planetarium, rainforest, living roof (opens 11am Sunday)",
-        "Lunch at Park Chalet on the park's western edge, near Ocean Beach",
-        "Afternoon: stroll Ocean Beach or explore more of the park (Japanese Tea Garden, Conservatory of Flowers)",
-        "Head back toward the Embarcadero for a final dinner at the Ferry Building",
-        "Walk to Embarcadero BART (~9:30pm) for the ride to SFO — flight departs 11:56 PM",
+        { time: "Morning", text: "Sleep in a bit, then check out and store luggage at the bell desk" },
+        { time: "11 AM", text: "California Academy of Sciences — aquarium, planetarium, rainforest, living roof (opens 11am Sun)" },
+        { time: "Lunch", text: "Park Chalet on the park's western edge, near Ocean Beach" },
+        { time: "Afternoon", text: "Stroll Ocean Beach or explore the park (Japanese Tea Garden, Conservatory of Flowers)" },
+        { time: "Evening", text: "Final dinner at the Ferry Building" },
+        { time: "~9:30 PM", text: "Walk to Embarcadero BART for SFO — flight departs 11:56 PM" },
       ],
 
       locations: [
@@ -470,3 +469,8 @@ const TRIP = {
 
   ],
 };
+
+/* Make the data reachable to the encrypt script (Node) and, if ever loaded
+   directly in a browser for local editing, to the page. Not used by the
+   deployed site — the site reads the encrypted data.enc.js instead. */
+if (typeof module !== "undefined" && module.exports) module.exports = TRIP;

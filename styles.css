@@ -1,21 +1,28 @@
 /* ============================================================================
    CALIFORNIA ROAD TRIP — STYLES
-   Mobile-first, rounded, bright, Google-ish.
+   Mobile-first, adventure aesthetic. Navy ink, warm cream base, angular type.
    You rarely need to touch this file to change the trip — edit data.js instead.
    To tweak a location's COLOR, find its theme block near the bottom (--accent etc).
    ========================================================================== */
 
 :root {
-  --bg: #f6f8fc;
-  --card: #ffffff;
-  --ink: #1f2430;
-  --ink-soft: #5b6472;
-  --line: #e8ecf3;
-  --shadow: 0 6px 24px rgba(31, 36, 48, 0.08);
-  --shadow-lg: 0 14px 40px rgba(31, 36, 48, 0.14);
-  --radius: 22px;
-  --radius-sm: 14px;
+  --bg: #f4f1eb;
+  --card: #fefcf8;
+  --ink: #0f1f3d;
+  --ink-soft: #4a5a6b;
+  --line: #ddd9d0;
+  --shadow: 0 6px 24px rgba(15, 31, 61, 0.08);
+  --shadow-lg: 0 14px 40px rgba(15, 31, 61, 0.14);
+  --radius: 14px;
+  --radius-sm: 8px;
   --bar-h: 74px;
+
+  /* ---- Timeline spacing — tweak these for visual clarity ---- */
+  --tl-item-gap:      16px;   /* vertical space between timeline bullets          */
+  --tl-indent:        26px;   /* left indent (text offset from bullet)            */
+  --tl-time-pad-v:    4px;    /* top/bottom padding of the time badge pill        */
+  --tl-time-pad-h:    9px;    /* left/right padding — also indents the event text */
+  --tl-time-gap:      5px;    /* space between the time badge and the event text  */
 
   /* default theme (overridden per-day) */
   --accent: #4285f4;
@@ -35,13 +42,17 @@ html, body {
   padding: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 button { font-family: inherit; cursor: pointer; }
 a { color: inherit; }
+
+/* Kill the mobile double-tap zoom (the "scaling" glitch on fast taps) and the
+   grey tap flash, so rapid prev/next taps stay crisp. */
+button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 
 /* ============================ COUNTDOWN GATE ============================ */
 .gate {
@@ -51,21 +62,23 @@ a { color: inherit; }
   place-items: center;
   text-align: center;
   padding: 24px;
-  background: radial-gradient(120% 90% at 50% 0%, #cfe1ff 0%, #f6f8fc 55%);
+  background:
+    radial-gradient(circle at 1px 1px, rgba(15, 31, 61, 0.09) 1px, transparent 0) 0 0 / 28px 28px,
+    radial-gradient(130% 100% at 50% 0%, #c8d8f0 0%, #f4f1eb 60%);
   z-index: 50;
   animation: fadeIn 0.5s ease both;
 }
 .gate-inner { max-width: 440px; width: 100%; }
 .gate-emoji { font-size: 64px; animation: floaty 3s ease-in-out infinite; }
 .gate-title {
-  font-family: "Fredoka", sans-serif;
+  font-family: "Syne", sans-serif;
   font-weight: 600;
   font-size: 1.9rem;
   margin: 6px 0 4px;
   color: var(--ink);
 }
 .gate-count {
-  font-family: "Fredoka", sans-serif;
+  font-family: "Syne", sans-serif;
   font-weight: 700;
   line-height: 1;
   margin: 10px 0;
@@ -92,7 +105,11 @@ a { color: inherit; }
 .gate-btn:hover { box-shadow: var(--shadow-lg); }
 
 /* ============================ UNLOCK SCREEN ============================ */
-.lock { background: radial-gradient(120% 90% at 50% 0%, #e3ebfb 0%, #f6f8fc 55%); }
+.lock {
+  background:
+    radial-gradient(circle at 1px 1px, rgba(15, 31, 61, 0.09) 1px, transparent 0) 0 0 / 28px 28px,
+    radial-gradient(130% 100% at 50% 0%, #dde8f5 0%, #f4f1eb 60%);
+}
 .lock-form {
   display: flex;
   flex-direction: column;
@@ -107,13 +124,13 @@ a { color: inherit; }
   text-align: center;
   padding: 15px 18px;
   border: 2px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-sm);
   background: #fff;
   color: var(--ink);
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.lock-input:focus { border-color: #4285f4; box-shadow: 0 0 0 4px #e9f1fe; }
+.lock-input:focus { border-color: #4285f4; box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.15); }
 .lock-form .gate-btn { width: 100%; background: #4285f4; }
 .lock-error { color: #d93025; font-weight: 700; margin-top: 14px; animation: fadeIn 0.2s ease; }
 .lock.shake .gate-inner { animation: shake 0.4s ease; }
@@ -185,7 +202,7 @@ a { color: inherit; }
   font-size: 0.72rem;
 }
 .hero h1 {
-  font-family: "Fredoka", sans-serif;
+  font-family: "Syne", sans-serif;
   font-weight: 600;
   font-size: 1.85rem;
   line-height: 1.12;
@@ -226,7 +243,7 @@ a { color: inherit; }
   background: var(--accent);
 }
 .section-head h2 {
-  font-family: "Fredoka", sans-serif;
+  font-family: "Syne", sans-serif;
   font-weight: 600;
   font-size: 1.18rem;
   margin: 0;
@@ -235,6 +252,7 @@ a { color: inherit; }
 
 .card {
   background: var(--card);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 16px 18px;
@@ -244,7 +262,7 @@ a { color: inherit; }
 .timeline { list-style: none; margin: 0; padding: 0; }
 .timeline li {
   position: relative;
-  padding: 0 0 16px 26px;
+  padding: 0 0 var(--tl-item-gap) var(--tl-indent);
   line-height: 1.5;
   color: var(--ink);
 }
@@ -254,18 +272,46 @@ a { color: inherit; }
   left: 4px; top: 5px;
   width: 11px; height: 11px;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
+  background: #fff;
+  border: 2.5px solid var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .timeline li::after {
   content: "";
   position: absolute;
-  left: 9px; top: 20px; bottom: -2px;
-  width: 2px;
-  background: var(--line);
+  left: 10px; top: 20px; bottom: -2px;
+  width: 3px;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--accent) 0px, var(--accent) 5px,
+    transparent 5px, transparent 12px
+  );
 }
 .timeline li:last-child { padding-bottom: 0; }
 .timeline li:last-child::after { display: none; }
+/* for timed items, nudge bullet up to align with the badge */
+.timeline li.has-time::before { top: 3px; }
+.timeline li.has-time::after { top: 18px; }
+/* optional time label on a bullet ({ time, text }) */
+.timeline li.has-time .t-time {
+  display: block;
+  font-weight: 800;
+  font-size: 0.7rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  padding: var(--tl-time-pad-v) var(--tl-time-pad-h);
+  border-radius: 999px;
+  margin-bottom: var(--tl-time-gap);
+  width: fit-content;
+  /* vertically center the pill on the bullet (bullet center sits 11px from li top) */
+  margin-top: calc(11px - var(--tl-time-pad-v) - 0.35rem + 3px);
+}
+.timeline li .t-text { display: block; }
+/* line up with the time text inside the pill, not the pill's outer edge */
+.timeline li.has-time .t-text { margin-left: var(--tl-time-pad-h); }
 
 /* Location chips/cards */
 .loc-list { display: grid; gap: 10px; }
@@ -289,7 +335,7 @@ a { color: inherit; }
   display: grid; place-items: center;
   font-size: 1.3rem;
   background: var(--accent-soft);
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
 }
 .loc-body { flex: 1; min-width: 0; }
 .loc-name { font-weight: 800; font-size: 1.0rem; display: flex; align-items: center; gap: 6px; }
@@ -369,14 +415,81 @@ a { color: inherit; }
 .confs[open] summary::after { transform: rotate(180deg); }
 .conf-list { margin: 8px 2px 0; display: grid; gap: 8px; }
 .conf-item {
-  display: flex; flex-direction: column;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   background: var(--card);
   border: 1.5px solid var(--line);
-  border-radius: 12px;
-  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  padding: 10px 10px 10px 14px;
 }
+.conf-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .conf-label { font-size: 0.78rem; color: var(--ink-soft); font-weight: 700; }
 .conf-value { font-weight: 800; font-size: 0.98rem; letter-spacing: 0.01em; word-break: break-word; }
+.conf-copy {
+  flex: none;
+  border: none;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 7px 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.conf-copy:active { transform: scale(0.92); }
+.conf-copy.copied { background: #e4f6e9; color: #1a7a39; }
+
+/* "Lock this device" footer control */
+.app-foot { display: flex; justify-content: center; margin: 22px 0 4px; }
+.forget-btn {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 700;
+  font-size: 0.86rem;
+  padding: 8px 14px;
+  border-radius: 999px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+.forget-btn:hover { opacity: 1; background: var(--line); }
+
+/* ============================ BACK-TO-TODAY PILL ============================ */
+.today-jump {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--bar-h) + env(safe-area-inset-bottom) + 14px);
+  transform: translateX(-50%);
+  z-index: 45;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.92rem;
+  padding: 11px 18px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+  animation: jumpIn 0.3s cubic-bezier(.2,.8,.2,1) both;
+}
+.today-jump:active { transform: translateX(-50%) scale(0.95); }
+.today-jump .tj-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.22);
+}
+@keyframes jumpIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
 
 /* ============================ BOTTOM BAR ============================ */
 .bottom-bar {
@@ -390,8 +503,8 @@ a { color: inherit; }
   padding-left: 10px; padding-right: 10px;
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: saturate(180%) blur(14px);
-  border-top: 1px solid var(--line);
-  box-shadow: 0 -6px 24px rgba(31, 36, 48, 0.07);
+  border-top: 2px solid var(--accent);
+  box-shadow: 0 -6px 24px rgba(15, 31, 61, 0.07);
   z-index: 40;
 }
 .bb-arrow {
@@ -421,7 +534,7 @@ a { color: inherit; }
   border-radius: 14px;
 }
 .bb-day {
-  font-family: "Fredoka", sans-serif;
+  font-family: "Syne", sans-serif;
   font-weight: 600;
   font-size: 1.12rem;
   color: var(--accent-ink);
