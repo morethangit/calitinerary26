@@ -240,15 +240,16 @@ const TRIP = {
       drive: "Pismo → Monterey via Hwy 1 (~130 mi · this is the long pole of the trip — budget the full day, expect a late/sunset arrival)",
 
       schedule: [
-        { time: "7:00 AM", text: "Depart Pismo Beach — this is a drive-and-stop day, take your time" },
-        { time: "9:00 AM", text: "Piedras Blancas Elephant Seals — pull over 15–20 min, hundreds of seals on the beach" },
-        { time: "10:30 AM", text: "McWay Falls (Julia Pfeiffer Burns SP) — turquoise waterfall onto a cove beach. Overlook trail to the falls/Saddle Rock is officially closed, but it's still visible from the road pullout, ~15 min" },
-        { time: "11:00 AM", text: "Partington Cove — short hike through a tunnel to a hidden cove, ~45 min" },
-        { time: "12:00 PM", text: "Lunch at Nepenthe — cliffside terrace, 1,000-ft ocean views, ~1 hr" },
-        { time: "1:00 PM", text: "Pfeiffer Big Sur State Park — pick 1–2 hikes below (~3 hrs): Pfeiffer Falls + Valley View Overlook combo (~1–1.25 hrs) pairs well with Buzzards Roost (~1–1.5 hrs) or the River Gorge Trail (~1.5–2 hrs)" },
-        { time: "4:00 PM", text: "Bixby Bridge — the classic shot, plus there are several unmarked pullouts (Hurricane Point, Point Sur) on the drive north worth a stop, ~30 min total" },
-        { time: "6:00 PM", text: "Garrapata State Park — pick from the hikes below (~2–2.5 hrs) — golden hour and sunset over the bluffs here are worth lingering for" },
-        { time: "8:30 PM", text: "Arrive Monterey — check into Embassy Suites" },
+        { time: "8:00 AM", text: "Depart Pismo Beach — this is a drive-and-stop day, take your time" },
+        { time: "9:20 AM", text: "Piedras Blancas Elephant Seals — pull over 20 min, hundreds of seals on the beach" },
+        { time: "11:08 AM", text: "McWay Falls (Julia Pfeiffer Burns SP) — turquoise waterfall onto a cove beach. Overlook trail is officially closed but still visible from the road pullout, ~20 min" },
+        { time: "11:33 AM", text: "Partington Cove — short hike through a tunnel to a hidden cove, ~20 min" },
+        { time: "1:03 PM", text: "Lunch at Nepenthe — cliffside terrace, 1,000-ft ocean views, ~1 hr" },
+        { time: "3:03 PM", text: "Pfeiffer Beach — purple-sand beach with Keyhole Rock arch, ~1.5 hrs (parking buffer built in)" },
+        { time: "5:03 PM", text: "Pfeiffer Big Sur State Park — pick 1–2 hikes: Pfeiffer Falls + Valley View Overlook combo (~1–1.25 hrs) or the River Gorge Trail (~1.5–2 hrs), ~1.5 hrs" },
+        { time: "6:08 PM", text: "Bixby Bridge — the classic shot, plus several unmarked pullouts (Hurricane Point, Point Sur) on the drive north, ~30 min total" },
+        { time: "8:18 PM", text: "Garrapata State Park — golden hour on the coastal bluffs, ~2 hrs (closes at sunset ~8:20–8:25 PM in late July — keep it to the short bluffs loop)" },
+        { time: "8:38 PM", text: "Arrive Monterey — check into Embassy Suites" },
         { time: "Evening", text: "Push your Passionfish reservation later (call ahead) or grab something casual on Cannery Row instead" },
       ],
 
@@ -290,8 +291,8 @@ const TRIP = {
       tips: [
         "Check Caltrans QuickMap the morning of — Hwy 1 can close after slides.",
         "Fuel up before Big Sur; gas is scarce and pricey along the coast.",
-        "With this much time at the hikes, you'll likely arrive in Monterey closer to 8:30–9 PM — call Passionfish to push the reservation back, or cancel if plans change.",
-        "Soberanes Canyon Trail at Garrapata (~2–2.5 hrs) now fits if you want the longer redwood-canyon hike instead of the shorter bluffs loop.",
+        "Garrapata closes at sunset — late July that's ~8:20–8:25 PM. You're arriving at 8:18 PM, so keep it to the short coastal bluffs loop (Soberanes Point & Whale Peak, ~1–1.5 hrs). If you're running late, skip it entirely.",
+        "Monterey arrival is ~8:38 PM — call Passionfish to push the reservation back, or cancel in favor of something casual on Cannery Row.",
       ],
 
       funFact: { q: "How long did it take to build the Bixby Creek Bridge in 1932?", url: "https://en.wikipedia.org/wiki/Bixby_Creek_Bridge" },
