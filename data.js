@@ -237,7 +237,7 @@ const TRIP = {
       tagline: "The most beautiful 130 miles of the whole trip.",
       theme: "bigsur",
       stay: { name: "Embassy Suites Monterey", map: "Embassy Suites Monterey" },
-      drive: "Pismo → Monterey via Hwy 1 (~130 mi · budget 4–5 hrs with stops)",
+      drive: "Pismo → Monterey via Hwy 1 (~130 mi · this is the long pole of the trip — budget the full day, expect a late/sunset arrival)",
 
       schedule: [
         { time: "7:00 AM", text: "Depart Pismo Beach — this is a drive-and-stop day, take your time" },
@@ -245,11 +245,11 @@ const TRIP = {
         { time: "10:30 AM", text: "McWay Falls (Julia Pfeiffer Burns SP) — turquoise waterfall onto a cove beach. Overlook trail to the falls/Saddle Rock is officially closed, but it's still visible from the road pullout, ~15 min" },
         { time: "11:00 AM", text: "Partington Cove — short hike through a tunnel to a hidden cove, ~45 min" },
         { time: "12:00 PM", text: "Lunch at Nepenthe — cliffside terrace, 1,000-ft ocean views, ~1 hr" },
-        { time: "1:00 PM", text: "Pfeiffer Big Sur State Park — pick from the hikes below (~1–1.5 hrs)" },
-        { time: "2:30 PM", text: "Bixby Bridge — pull over on the north side for the classic shot, ~15 min" },
-        { time: "3:00 PM", text: "Garrapata State Park — pick from the hikes below (~1–1.5 hrs)" },
-        { time: "5:00 PM", text: "Arrive Monterey — check into Embassy Suites" },
-        { time: "Evening", text: "Walk Cannery Row — the waterfront lights are beautiful at night" },
+        { time: "1:00 PM", text: "Pfeiffer Big Sur State Park — pick 1–2 hikes below (~3 hrs): Pfeiffer Falls + Valley View Overlook combo (~1–1.25 hrs) pairs well with Buzzards Roost (~1–1.5 hrs) or the River Gorge Trail (~1.5–2 hrs)" },
+        { time: "4:00 PM", text: "Bixby Bridge — the classic shot, plus there are several unmarked pullouts (Hurricane Point, Point Sur) on the drive north worth a stop, ~30 min total" },
+        { time: "6:00 PM", text: "Garrapata State Park — pick from the hikes below (~2–2.5 hrs) — golden hour and sunset over the bluffs here are worth lingering for" },
+        { time: "8:30 PM", text: "Arrive Monterey — check into Embassy Suites" },
+        { time: "Evening", text: "Push your Passionfish reservation later (call ahead) or grab something casual on Cannery Row instead" },
       ],
 
       locations: [
@@ -290,7 +290,8 @@ const TRIP = {
       tips: [
         "Check Caltrans QuickMap the morning of — Hwy 1 can close after slides.",
         "Fuel up before Big Sur; gas is scarce and pricey along the coast.",
-        "Cancel the Passionfish reservation if plans change so you're not charged.",
+        "With this much time at the hikes, you'll likely arrive in Monterey closer to 8:30–9 PM — call Passionfish to push the reservation back, or cancel if plans change.",
+        "Soberanes Canyon Trail at Garrapata (~2–2.5 hrs) now fits if you want the longer redwood-canyon hike instead of the shorter bluffs loop.",
       ],
 
       funFact: { q: "How long did it take to build the Bixby Creek Bridge in 1932?", url: "https://en.wikipedia.org/wiki/Bixby_Creek_Bridge" },
