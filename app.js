@@ -208,9 +208,12 @@
     if (day.drive && day.drive.from && day.drive.to) {
       const route = el("div", "hero-route");
       route.innerHTML =
-        '<div class="hero-route-point"><span class="hero-route-dot"></span><span>' + esc(day.drive.from) + "</span></div>" +
-        '<div class="hero-route-line"><span class="hero-route-duration">' + esc(day.drive.duration || "") + "</span></div>" +
-        '<div class="hero-route-point"><span class="hero-route-dot"></span><span>' + esc(day.drive.to) + "</span></div>" +
+        '<div class="hero-route-track">' +
+          '<span class="hero-route-dot"></span>' +
+          '<span class="hero-route-line"><span class="hero-route-duration">' + esc(day.drive.duration || "") + "</span></span>" +
+          '<span class="hero-route-dot"></span>' +
+        "</div>" +
+        '<div class="hero-route-labels"><span>' + esc(day.drive.from) + "</span><span>" + esc(day.drive.to) + "</span></div>" +
         (day.drive.note ? '<div class="hero-route-note">' + esc(day.drive.note) + "</div>" : "");
       meta.appendChild(route);
     } else if (day.drive) {

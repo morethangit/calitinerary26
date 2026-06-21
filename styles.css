@@ -243,38 +243,34 @@ button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-hi
 .hero-meta-top { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* drive, when it's a real point-to-point leg: a route bar anchored to the
-   bottom edge of the hero, visually distinct from the stay/weather chips */
+   bottom edge of the hero, visually distinct from the stay/weather chips.
+   The dots+line track and the from/to labels are separate rows so the
+   line's length never depends on label width — it always runs dot-to-dot. */
 .hero-route {
   display: flex;
-  align-items: flex-start;
-  gap: 4px 10px;
+  flex-direction: column;
+  gap: 6px;
   margin: 6px -22px -24px;
   padding: 20px 22px 12px;
   background: rgba(0, 0, 0, 0.14);
   border-radius: 0 0 var(--radius) var(--radius);
-  flex-wrap: wrap;
 }
-.hero-route-point {
+.hero-route-track {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  font-weight: 800;
-  font-size: 0.82rem;
-  text-align: center;
 }
 .hero-route-dot {
+  flex: none;
   width: 9px; height: 9px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
 }
 .hero-route-line {
-  flex: 1 1 60px;
-  min-width: 40px;
+  flex: 1 1 auto;
+  min-width: 24px;
   position: relative;
   height: 2px;
-  margin-top: 3.5px; /* centers the line on the 9px dots above */
   background: repeating-linear-gradient(
     to right,
     rgba(255, 255, 255, 0.7) 0px, rgba(255, 255, 255, 0.7) 5px,
@@ -294,8 +290,15 @@ button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-hi
   padding: 4px 10px;
   border-radius: 999px;
 }
+.hero-route-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 0.82rem;
+}
+.hero-route-labels span:last-child { text-align: right; }
 .hero-route-note {
-  flex: 1 0 100%;
   font-size: 0.78rem;
   opacity: 0.85;
 }
