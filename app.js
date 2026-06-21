@@ -193,8 +193,11 @@
       const dayNum = day.num;
       Weather.get(day.date, day.stay.coords).then(w => {
         if (days[current].num !== dayNum) return; // user navigated away before this resolved
-        if (!w) { wchip.remove(); return; }
         wchip.classList.remove("is-loading");
+        if (!w) {
+          wchip.querySelector(".wx-text").textContent = "Forecast not available yet";
+          return;
+        }
         wchip.querySelector(".wx-text").textContent =
           w.label + " " + Math.round(w.tMax) + "°/" + Math.round(w.tMin) + "°";
       });
