@@ -310,9 +310,9 @@ button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-hi
   /* vertically center the pill on the bullet (bullet center sits 11px from li top) */
   margin-top: calc(11px - var(--tl-time-pad-v) - 0.35rem + 3px);
 }
-.timeline li .t-text { display: block; }
-/* line up with the time text inside the pill, not the pill's outer edge */
-.timeline li.has-time .t-text { margin-left: var(--tl-time-pad-h); }
+/* line up with the time text inside the pill, not the pill's outer edge —
+   applied to all items so timed and untimed text share the same left edge */
+.timeline li .t-text { display: block; margin-left: var(--tl-time-pad-h); }
 
 /* Location chips/cards */
 .loc-list { display: grid; gap: 10px; }
