@@ -28,6 +28,10 @@
    THEMES set each day's color:
        anaheim (blue) · pismo (yellow) · bigsur (orange)
        yosemite (green) · sf (red)
+
+   WEATHER — optional. Add  coords: { lat, lon }  to a day's "stay" to show
+   a weather chip near that day's hero. It only appears once a real
+   forecast exists for that date (within about two weeks of today).
    ========================================================================== */
 
 const TRIP = {
@@ -46,7 +50,7 @@ const TRIP = {
       title: "Travel Day → Anaheim",
       tagline: "Fly into LAX, settle into Anaheim, prep for Disney.",
       theme: "anaheim",
-      stay: { name: "Marriott Anaheim", map: "Marriott Anaheim" },
+      stay: { name: "Marriott Anaheim", map: "Marriott Anaheim", coords: { lat: 33.8025, lon: -117.9219 } },
       drive: "LAX → Anaheim (~35 min · Uber or rental car)",
 
       schedule: [
@@ -84,7 +88,7 @@ const TRIP = {
       title: "Disneyland + Disney California Adventure",
       tagline: "Rope drop to fireworks — both parks in one big day.",
       theme: "anaheim",
-      stay: { name: "Marriott Anaheim", map: "Marriott Anaheim" },
+      stay: { name: "Marriott Anaheim", map: "Marriott Anaheim", coords: { lat: 33.8025, lon: -117.9219 } },
       drive: "Park hours ~8am–midnight (check the app the night before)",
 
       schedule: [
@@ -130,7 +134,7 @@ const TRIP = {
       title: "Drive to Pismo Beach",
       tagline: "Easy coastal cruise north — chowder and a sunset pier.",
       theme: "pismo",
-      stay: { name: "VRBO, Pismo Beach", map: "Pismo Beach California" },
+      stay: { name: "VRBO, Pismo Beach", map: "Pismo Beach California", coords: { lat: 35.1428, lon: -120.6413 } },
       drive: "Anaheim → Pismo Beach via US-101 N (~3 hrs · easy & flat)",
 
       schedule: [
@@ -166,7 +170,7 @@ const TRIP = {
       title: "Oceano Dunes + Beach Day",
       tagline: "ATVs across the dunes, then a crab feast.",
       theme: "pismo",
-      stay: { name: "VRBO, Pismo Beach", map: "Pismo Beach California" },
+      stay: { name: "VRBO, Pismo Beach", map: "Pismo Beach California", coords: { lat: 35.1428, lon: -120.6413 } },
       drive: "All local — beach and dunes are minutes away",
 
       schedule: [
@@ -201,7 +205,7 @@ const TRIP = {
       title: "Free Beach Day — Pismo",
       tagline: "No agenda. Sand, surf, and maybe a little wine.",
       theme: "pismo",
-      stay: { name: "VRBO, Pismo Beach", map: "Pismo Beach California" },
+      stay: { name: "VRBO, Pismo Beach", map: "Pismo Beach California", coords: { lat: 35.1428, lon: -120.6413 } },
       drive: "Rest day — no driving required",
 
       schedule: [
@@ -236,7 +240,7 @@ const TRIP = {
       title: "Big Sur Drive → Monterey",
       tagline: "The most beautiful 130 miles of the whole trip.",
       theme: "bigsur",
-      stay: { name: "Embassy Suites Monterey", map: "Embassy Suites Monterey" },
+      stay: { name: "Embassy Suites Monterey", map: "Embassy Suites Monterey", coords: { lat: 36.6002, lon: -121.8947 } },
       drive: "Pismo → Monterey via Hwy 1 (~130 mi · this is the long pole of the trip — budget the full day, expect a late/sunset arrival)",
 
       schedule: [
@@ -306,7 +310,7 @@ const TRIP = {
       title: "Point Lobos Hike → Drive to Yosemite",
       tagline: "One last coastal hike, then up into the Sierra.",
       theme: "yosemite",
-      stay: { name: "VRBO, Midpines", map: "6730 Rancheria Creek Rd, Midpines, CA 95345" },
+      stay: { name: "VRBO, Midpines", map: "6730 Rancheria Creek Rd, Midpines, CA 95345", coords: { lat: 37.523, lon: -119.941 } },
       drive: "Monterey → Midpines via US-101 → CA-140 (~3.5 hrs). Enter at Hwy 140 / Arch Rock — no reservations in 2026.",
 
       schedule: [
@@ -347,7 +351,7 @@ const TRIP = {
       title: "Yosemite — Mist Trail + Nevada Falls",
       tagline: "The signature hike. You will get wet.",
       theme: "yosemite",
-      stay: { name: "VRBO, Midpines", map: "6730 Rancheria Creek Rd, Midpines, CA 95345" },
+      stay: { name: "VRBO, Midpines", map: "6730 Rancheria Creek Rd, Midpines, CA 95345", coords: { lat: 37.523, lon: -119.941 } },
       drive: "~6 mi round trip · ~2,000 ft gain · bring water, snacks & grip shoes",
 
       schedule: [
@@ -382,7 +386,7 @@ const TRIP = {
       title: "Yosemite — Tuolumne Meadows",
       tagline: "High-country Yosemite — alpine lakes, far fewer crowds.",
       theme: "yosemite",
-      stay: { name: "VRBO, Midpines", map: "6730 Rancheria Creek Rd, Midpines, CA 95345" },
+      stay: { name: "VRBO, Midpines", map: "6730 Rancheria Creek Rd, Midpines, CA 95345", coords: { lat: 37.523, lon: -119.941 } },
       drive: "~1.5 hrs up to the meadows via Tioga Road — 8,600 ft elevation",
 
       schedule: [
@@ -420,7 +424,7 @@ const TRIP = {
       title: "Yosemite Morning → San Francisco",
       tagline: "One last summit, then trade granite for the bay.",
       theme: "sf",
-      stay: { name: "Hilton San Francisco", map: "Hilton San Francisco Union Square" },
+      stay: { name: "Hilton San Francisco", map: "Hilton San Francisco Union Square", coords: { lat: 37.788, lon: -122.4075 } },
       drive: "Midpines → SF via CA-120 → I-205W → I-580 (~4.5 hrs with the morning hike)",
 
       schedule: [

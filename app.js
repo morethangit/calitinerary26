@@ -187,6 +187,18 @@
     if (day.drive) {
       meta.appendChild(el("div", "hero-chip", '<span class="ic">🚗</span><span>' + esc(day.drive) + "</span>"));
     }
+    if (day.stay && day.stay.coords && window.Weather) {
+      const wchip = el("div", "hero-chip hero-chip-weather is-loading", '<span class="ic">⛅</span><span class="wx-text">Loading…</span>');
+      meta.appendChild(wchip);
+      const dayNum = day.num;
+      Weather.get(day.date, day.stay.coords).then(w => {
+        if (days[current].num !== dayNum) return; // user navigated away before this resolved
+        if (!w) { wchip.remove(); return; }
+        wchip.classList.remove("is-loading");
+        wchip.querySelector(".wx-text").textContent =
+          w.label + " " + Math.round(w.tMax) + "°/" + Math.round(w.tMin) + "°";
+      });
+    }
     hero.appendChild(meta);
     card.appendChild(hero);
 
