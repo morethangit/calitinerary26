@@ -258,6 +258,7 @@ button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-hi
 .hero-route-track {
   display: flex;
   align-items: center;
+  gap: 2px; /* small breathing room so the line never touches a dot */
 }
 .hero-route-dot {
   flex: none;
@@ -276,6 +277,11 @@ button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-hi
     rgba(255, 255, 255, 0.7) 0px, rgba(255, 255, 255, 0.7) 5px,
     transparent 5px, transparent 10px
   );
+  /* centers the dash pattern so any leftover space splits evenly between
+     both ends, instead of always landing on whichever end the pattern
+     happened to start from (which made one dot touch a dash and the
+     other land on a gap) */
+  background-position: center;
   display: flex;
   align-items: center;
   justify-content: center;
