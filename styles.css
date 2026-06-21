@@ -212,6 +212,7 @@ a { color: inherit; }
 .hero-chip:active { transform: scale(0.97); }
 .hero-chip .ic { font-size: 1.05rem; }
 .hero-chip.linkish::after { content: "↗"; font-size: 0.8rem; opacity: 0.5; }
+.hero-chip-weather.is-loading { opacity: 0.7; }
 
 /* ---- Sections ---- */
 .section { margin-top: 20px; animation: fadeIn 0.5s ease both; }
