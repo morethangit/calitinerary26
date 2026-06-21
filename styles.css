@@ -50,6 +50,14 @@ html, body {
 button { font-family: inherit; cursor: pointer; }
 a { color: inherit; }
 
+/* ---- iOS-style scrollbar: thin and translucent. Auto-hide-on-idle is left
+   to the OS/browser's native overlay scrollbar behavior (animating the
+   ::-webkit-scrollbar-thumb pseudo-element directly is unreliable). */
+html { scrollbar-width: thin; scrollbar-color: rgba(15, 31, 61, 0.25) transparent; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(15, 31, 61, 0.25); border-radius: 999px; }
+
 /* Kill the mobile double-tap zoom (the "scaling" glitch on fast taps) and the
    grey tap flash, so rapid prev/next taps stay crisp. */
 button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
@@ -230,6 +238,67 @@ button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-hi
 .hero-chip .ic { font-size: 1.05rem; }
 .hero-chip.linkish::after { content: "↗"; font-size: 0.8rem; opacity: 0.5; }
 .hero-chip-weather.is-loading { opacity: 0.7; }
+
+/* stay + weather sit side by side when there's room, stack when there isn't */
+.hero-meta-top { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* drive, when it's a real point-to-point leg: a route bar anchored to the
+   bottom edge of the hero, visually distinct from the stay/weather chips */
+.hero-route {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px 10px;
+  margin: 6px -22px -24px;
+  padding: 20px 22px 12px;
+  background: rgba(0, 0, 0, 0.14);
+  border-radius: 0 0 var(--radius) var(--radius);
+  flex-wrap: wrap;
+}
+.hero-route-point {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  text-align: center;
+}
+.hero-route-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
+.hero-route-line {
+  flex: 1 1 60px;
+  min-width: 40px;
+  position: relative;
+  height: 2px;
+  margin-top: 3.5px; /* centers the line on the 9px dots above */
+  background: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.7) 0px, rgba(255, 255, 255, 0.7) 5px,
+    transparent 5px, transparent 10px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-route-duration {
+  background: #fff;
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.hero-route-note {
+  flex: 1 0 100%;
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
 
 /* ---- Sections ---- */
 .section { margin-top: 20px; animation: fadeIn 0.5s ease both; }
@@ -493,20 +562,47 @@ button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-hi
 }
 
 /* ============================ BOTTOM BAR ============================ */
+/* Floating, inset from the edges (not edge-to-edge) so it never collides
+   with the scrollbar gutter, and capped to the day card's max-width so it
+   lines up with the route bar above on wide screens. */
 .bottom-bar {
   position: fixed;
-  left: 0; right: 0; bottom: 0;
-  height: calc(var(--bar-h) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
+  left: 14px; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom));
+  max-width: 652px; /* matches the day card's content width (680px .app max-width minus its 14px side padding) */
+  margin: 0 auto;
+  height: var(--bar-h);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: saturate(180%) blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 12px 32px rgba(15, 31, 61, 0.18);
+  z-index: 40;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.bottom-bar.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+/* a blurred gradient strip floating just above the bar — page content
+   dissolves into blur as it approaches the nav, like an iOS tab bar */
+.bottom-bar::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 100%;
+  height: 40px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  pointer-events: none;
+}
+.bottom-bar-inner {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-left: 10px; padding-right: 10px;
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: saturate(180%) blur(14px);
-  border-top: 2px solid var(--accent);
-  box-shadow: 0 -6px 24px rgba(15, 31, 61, 0.07);
-  z-index: 40;
+  height: 100%;
+  padding: 0 12px;
 }
 .bb-arrow {
   flex: none;

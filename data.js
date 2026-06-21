@@ -32,6 +32,12 @@
    WEATHER — optional. Add  coords: { lat, lon }  to a day's "stay" to show
    a weather chip near that day's hero. It only appears once a real
    forecast exists for that date (within about two weeks of today).
+
+   DRIVE — two ways to write it:
+       "Rest day — no driving required"                  ← plain note (just text)
+       { from: "LAX", to: "Anaheim", duration: "~35 min", note: "Uber or rental car" }
+                                                           ← shows as a start→end route bar
+   Use the route object only for an actual point-to-point leg.
    ========================================================================== */
 
 const TRIP = {
@@ -51,7 +57,7 @@ const TRIP = {
       tagline: "Fly into LAX, settle into Anaheim, prep for Disney.",
       theme: "anaheim",
       stay: { name: "Marriott Anaheim", map: "Marriott Anaheim", coords: { lat: 33.8025, lon: -117.9219 } },
-      drive: "LAX → Anaheim (~35 min · Uber or rental car)",
+      drive: { from: "LAX", to: "Anaheim", duration: "~35 min", note: "Uber or rental car" },
 
       schedule: [
         "Fly into LAX — collect luggage, grab the rental car or rideshare",
@@ -135,7 +141,7 @@ const TRIP = {
       tagline: "Easy coastal cruise north — chowder and a sunset pier.",
       theme: "pismo",
       stay: { name: "VRBO, Pismo Beach", map: "Pismo Beach California", coords: { lat: 35.1428, lon: -120.6413 } },
-      drive: "Anaheim → Pismo Beach via US-101 N (~3 hrs · easy & flat)",
+      drive: { from: "Anaheim", to: "Pismo Beach", duration: "~3 hrs", note: "via US-101 N · easy & flat" },
 
       schedule: [
         { time: "Morning", text: "Check out from the Marriott" },
@@ -241,7 +247,7 @@ const TRIP = {
       tagline: "The most beautiful 130 miles of the whole trip.",
       theme: "bigsur",
       stay: { name: "Embassy Suites Monterey", map: "Embassy Suites Monterey", coords: { lat: 36.6002, lon: -121.8947 } },
-      drive: "Pismo → Monterey via Hwy 1 (~130 mi · this is the long pole of the trip — budget the full day, expect a late/sunset arrival)",
+      drive: { from: "Pismo", to: "Monterey", duration: "~130 mi", note: "via Hwy 1 — the long pole of the trip; budget the full day, expect a late/sunset arrival" },
 
       schedule: [
         { time: "8:00 AM", text: "Depart Pismo Beach — this is a drive-and-stop day, take your time" },
@@ -311,7 +317,7 @@ const TRIP = {
       tagline: "One last coastal hike, then up into the Sierra.",
       theme: "yosemite",
       stay: { name: "VRBO, Midpines", map: "6730 Rancheria Creek Rd, Midpines, CA 95345", coords: { lat: 37.523, lon: -119.941 } },
-      drive: "Monterey → Midpines via US-101 → CA-140 (~3.5 hrs). Enter at Hwy 140 / Arch Rock — no reservations in 2026.",
+      drive: { from: "Monterey", to: "Midpines", duration: "~3.5 hrs", note: "via US-101 → CA-140 · enter at Hwy 140 / Arch Rock — no reservations in 2026" },
 
       schedule: [
         { time: "Early AM", text: "Point Lobos hike — Cypress Grove + Bird Island Trails (~1.5 hrs), then back to the hotel" },
@@ -425,7 +431,7 @@ const TRIP = {
       tagline: "One last summit, then trade granite for the bay.",
       theme: "sf",
       stay: { name: "Hilton San Francisco", map: "Hilton San Francisco Union Square", coords: { lat: 37.788, lon: -122.4075 } },
-      drive: "Midpines → SF via CA-120 → I-205W → I-580 (~4.5 hrs with the morning hike)",
+      drive: { from: "Midpines", to: "SF", duration: "~4.5 hrs", note: "via CA-120 → I-205W → I-580, with the morning hike" },
 
       schedule: [
         { time: "6:15 AM", text: "Leave the VRBO for the Sentinel Dome trailhead" },
@@ -468,7 +474,7 @@ const TRIP = {
       tagline: "Golden Gate Park, the Ferry Building, then a red-eye home.",
       theme: "sf",
       stay: { name: "Flying home tonight ✈️", url: "" },
-      drive: "BART from Powell St or Embarcadero → SFO (~30 min, $9/person). Far easier than Uber for 5 with bags.",
+      drive: { from: "Powell St / Embarcadero", to: "SFO", duration: "~30 min", note: "BART · $9/person — easier than Uber for 5 with bags" },
 
       schedule: [
         { time: "Morning", text: "Sleep in a bit, then check out and store luggage at the bell desk" },

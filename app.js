@@ -136,24 +136,27 @@
   }
 
   /* ---------- screens ---------- */
+  function setBottomBarVisible(visible) {
+    bottomBar.classList.toggle("is-visible", visible);
+  }
   function showGate() {
     const n = daysUntil();
     document.getElementById("gateNumber").textContent = n;
     document.getElementById("gateUnit").textContent = n === 1 ? "day" : "days";
     document.getElementById("gateSub").textContent =
       (CFG.title || "Trip") + " · " + prettyDate(CFG.startDate) + ", " + parseDate(CFG.startDate).getFullYear();
-    gate.hidden = false; lock.hidden = true; app.hidden = true; bottomBar.hidden = true;
+    gate.hidden = false; lock.hidden = true; app.hidden = true; setBottomBarVisible(false);
     todayJump.hidden = true;
   }
   function showLock(targetIndex) {
     pendingTarget = targetIndex != null ? targetIndex : todayIndex();
-    gate.hidden = true; lock.hidden = false; app.hidden = true; bottomBar.hidden = true;
+    gate.hidden = true; lock.hidden = false; app.hidden = true; setBottomBarVisible(false);
     todayJump.hidden = true;
     const input = document.getElementById("lockInput");
     if (input) setTimeout(() => input.focus(), 80);
   }
   function enterApp(startIndex) {
-    gate.hidden = true; lock.hidden = true; app.hidden = false; bottomBar.hidden = false;
+    gate.hidden = true; lock.hidden = true; app.hidden = false; setBottomBarVisible(true);
     current = startIndex != null ? startIndex : current;
     render(0);
   }
@@ -177,19 +180,17 @@
     if (day.tagline) hero.appendChild(el("p", "hero-tagline", esc(day.tagline)));
 
     const meta = el("div", "hero-meta");
+    const metaTop = el("div", "hero-meta-top");
     if (day.stay && day.stay.name) {
       const u = resolveUrl(day.stay);
       const chip = u ? el("a", "hero-chip linkish") : el("div", "hero-chip");
       if (u) { chip.href = u; chip.target = "_blank"; chip.rel = "noopener"; }
       chip.innerHTML = '<span class="ic">🛏️</span><span>' + esc(day.stay.name) + "</span>";
-      meta.appendChild(chip);
-    }
-    if (day.drive) {
-      meta.appendChild(el("div", "hero-chip", '<span class="ic">🚗</span><span>' + esc(day.drive) + "</span>"));
+      metaTop.appendChild(chip);
     }
     if (day.stay && day.stay.coords && window.Weather) {
       const wchip = el("div", "hero-chip hero-chip-weather is-loading", '<span class="ic">⛅</span><span class="wx-text">Loading…</span>');
-      meta.appendChild(wchip);
+      metaTop.appendChild(wchip);
       const dayNum = day.num;
       Weather.get(day.date, day.stay.coords).then(w => {
         if (days[current].num !== dayNum) return; // user navigated away before this resolved
@@ -201,6 +202,19 @@
         wchip.querySelector(".wx-text").textContent =
           w.label + " " + Math.round(w.tMax) + "°/" + Math.round(w.tMin) + "°";
       });
+    }
+    if (metaTop.children.length) meta.appendChild(metaTop);
+
+    if (day.drive && day.drive.from && day.drive.to) {
+      const route = el("div", "hero-route");
+      route.innerHTML =
+        '<div class="hero-route-point"><span class="hero-route-dot"></span><span>' + esc(day.drive.from) + "</span></div>" +
+        '<div class="hero-route-line"><span class="hero-route-duration">' + esc(day.drive.duration || "") + "</span></div>" +
+        '<div class="hero-route-point"><span class="hero-route-dot"></span><span>' + esc(day.drive.to) + "</span></div>" +
+        (day.drive.note ? '<div class="hero-route-note">' + esc(day.drive.note) + "</div>" : "");
+      meta.appendChild(route);
+    } else if (day.drive) {
+      meta.appendChild(el("div", "hero-chip", "<span>" + esc(day.drive) + "</span>"));
     }
     hero.appendChild(meta);
     card.appendChild(hero);
