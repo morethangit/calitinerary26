@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <!-- PLACEHOLDER prop — replace, keep anim- names. -->
+  <!-- ship -->
+  <path d="M250 430 L560 430 L520 510 L290 510 Z" fill="#5a3b22"/>
+  <rect x="398" y="200" width="14" height="240" fill="#3d2817"/>
+  <path d="M412 220 q120 30 120 110 l-120 0 Z" fill="#efe6d2"/>
+  <path d="M398 240 q-100 26 -100 96 l100 0 Z" fill="#efe6d2"/>
+  <!-- water -->
+  <g id="anim-water" fill="#3f88a8">
+    <path d="M0 520 q80 -22 160 0 t160 0 t160 0 t160 0 t160 0 V600 H0 Z"/>
+  </g>
+  <g id="anim-water" fill="#5aa6c4" opacity="0.6">
+    <path d="M0 545 q80 -18 160 0 t160 0 t160 0 t160 0 t160 0 V600 H0 Z"/>
+  </g>
+  <!-- swinging lanterns -->
+  <g id="anim-lantern" fill="#ffcf6b">
+    <circle cx="300" cy="300" r="12"/><circle cx="520" cy="300" r="12"/>
+  </g>
+</svg>

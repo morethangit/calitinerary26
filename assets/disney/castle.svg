@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" fill="none">
+  <!-- PLACEHOLDER prop. Replace with your illustration (keep anim- group names). -->
+  <g id="anim-twinkle" fill="#fff">
+    <circle cx="150" cy="120" r="4"/><circle cx="680" cy="90" r="5"/>
+    <circle cx="520" cy="60" r="3"/><circle cx="280" cy="70" r="3"/>
+  </g>
+  <!-- towers, standing on bottom edge -->
+  <g fill="#cdd6ff">
+    <rect x="150" y="520" width="90" height="480"/>
+    <rect x="560" y="520" width="90" height="480"/>
+    <rect x="320" y="360" width="160" height="640"/>
+  </g>
+  <g fill="#aab6f0">
+    <rect x="250" y="640" width="70" height="360"/>
+    <rect x="480" y="640" width="70" height="360"/>
+  </g>
+  <!-- conical roofs -->
+  <g fill="#6d7adf">
+    <path d="M150 520 L195 410 L240 520 Z"/>
+    <path d="M560 520 L605 410 L650 520 Z"/>
+    <path d="M320 360 L400 200 L480 360 Z"/>
+    <path d="M250 640 L285 560 L320 640 Z"/>
+    <path d="M480 640 L515 560 L550 640 Z"/>
+  </g>
+  <!-- glowing windows -->
+  <g id="anim-glow" fill="#ffe39c">
+    <rect x="385" y="430" width="30" height="48" rx="15"/>
+    <rect x="178" y="600" width="34" height="50" rx="17"/>
+    <rect x="588" y="600" width="34" height="50" rx="17"/>
+    <rect x="270" y="720" width="30" height="44" rx="15"/>
+    <rect x="500" y="720" width="30" height="44" rx="15"/>
+  </g>
+  <!-- pennant flags -->
+  <g id="anim-flag" fill="#ff7bbf">
+    <path d="M400 200 L400 150 L450 165 L400 180 Z"/>
+    <path d="M195 410 L195 372 L233 384 L195 396 Z"/>
+    <path d="M605 410 L605 372 L643 384 L605 396 Z"/>
+  </g>
+</svg>

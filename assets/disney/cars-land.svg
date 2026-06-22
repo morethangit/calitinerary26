@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" fill="none">
+  <!-- PLACEHOLDER prop — replace, keep anim- names. -->
+  <!-- Cadillac Range mesas, bottom edge -->
+  <g fill="#b4502f">
+    <path d="M60 600 L120 300 L210 320 L240 600 Z"/>
+    <path d="M300 600 L360 240 L470 270 L500 600 Z"/>
+    <path d="M560 600 L640 290 L760 320 L820 600 Z"/>
+  </g>
+  <g fill="#8f3a20">
+    <path d="M120 300 L210 320 L210 380 L120 360 Z"/>
+    <path d="M360 240 L470 270 L470 330 L360 300 Z"/>
+    <path d="M640 290 L760 320 L760 380 L640 350 Z"/>
+  </g>
+  <!-- tail-fin neon -->
+  <g id="anim-neon" fill="#ff5fa2">
+    <path d="M120 300 L150 250 L160 300 Z"/>
+    <path d="M360 240 L392 188 L404 240 Z"/>
+    <path d="M640 290 L672 240 L684 290 Z"/>
+  </g>
+</svg>

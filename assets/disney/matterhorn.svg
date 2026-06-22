@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 800" fill="none">
+  <!-- PLACEHOLDER prop — replace, keep anim- names. -->
+  <g id="anim-twinkle" fill="#fff">
+    <circle cx="120" cy="120" r="4"/><circle cx="560" cy="90" r="4"/><circle cx="610" cy="200" r="3"/>
+  </g>
+  <!-- mountain mass on bottom edge -->
+  <path d="M120 800 L300 230 L360 320 L420 180 L600 800 Z" fill="#8fa6c9"/>
+  <path d="M300 230 L360 320 L420 180 L470 290 L300 230 Z" fill="#7088b0"/>
+  <!-- snow caps -->
+  <g id="anim-snow" fill="#f4f8ff">
+    <path d="M420 180 L388 270 L452 270 Z"/>
+    <path d="M300 230 L272 300 L332 300 Z"/>
+    <path d="M380 360 L350 430 L300 430 L330 360 Z"/>
+    <path d="M450 360 L480 430 L530 430 L500 360 Z"/>
+  </g>
+</svg>

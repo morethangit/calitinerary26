@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 700" fill="none">
+  <!-- PLACEHOLDER prop — replace, keep anim- names. -->
+  <!-- coaster track -->
+  <path id="anim-coaster" d="M40 560 Q200 380 360 540 T700 460" stroke="#e85d8a" stroke-width="10" fill="none"/>
+  <!-- ferris wheel -->
+  <line x1="400" y1="700" x2="400" y2="360" stroke="#7a8694" stroke-width="14"/>
+  <g id="anim-wheel">
+    <circle cx="400" cy="320" r="180" stroke="#ffd24a" stroke-width="12" fill="none"/>
+    <g stroke="#ffd24a" stroke-width="6">
+      <line x1="400" y1="320" x2="400" y2="140"/><line x1="400" y1="320" x2="580" y2="320"/>
+      <line x1="400" y1="320" x2="400" y2="500"/><line x1="400" y1="320" x2="220" y2="320"/>
+      <line x1="400" y1="320" x2="527" y2="193"/><line x1="400" y1="320" x2="273" y2="447"/>
+      <line x1="400" y1="320" x2="527" y2="447"/><line x1="400" y1="320" x2="273" y2="193"/>
+    </g>
+    <g fill="#4ec5e8">
+      <circle cx="400" cy="140" r="20"/><circle cx="580" cy="320" r="20"/>
+      <circle cx="400" cy="500" r="20"/><circle cx="220" cy="320" r="20"/>
+      <circle cx="527" cy="193" r="20"/><circle cx="273" cy="447" r="20"/>
+      <circle cx="527" cy="447" r="20"/><circle cx="273" cy="193" r="20"/>
+    </g>
+  </g>
+  <circle cx="400" cy="320" r="26" fill="#ff9e3d"/>
+</svg>

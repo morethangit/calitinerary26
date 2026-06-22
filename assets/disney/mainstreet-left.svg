@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 1200" fill="none" preserveAspectRatio="xMinYMax meet">
+  <!-- PLACEHOLDER Main Street row (left). Replace, keep anim- names. -->
+  <g fill="#d9b48a">
+    <rect x="220" y="200" width="200" height="1000"/>
+    <rect x="120" y="420" width="180" height="780"/>
+    <rect x="20" y="640" width="160" height="560"/>
+  </g>
+  <!-- trims / roofs -->
+  <g fill="#b3835a">
+    <path d="M220 200 L320 130 L420 200 Z"/>
+    <path d="M120 420 L210 360 L300 420 Z"/>
+    <path d="M20 640 L100 590 L180 640 Z"/>
+  </g>
+  <!-- warm windows -->
+  <g fill="#ffe2a6">
+    <rect x="250" y="300" width="44" height="60" rx="6"/><rect x="330" y="300" width="44" height="60" rx="6"/>
+    <rect x="250" y="430" width="44" height="60" rx="6"/><rect x="330" y="430" width="44" height="60" rx="6"/>
+    <rect x="150" y="520" width="40" height="56" rx="6"/><rect x="220" y="520" width="40" height="56" rx="6"/>
+    <rect x="50" y="740" width="38" height="52" rx="6"/><rect x="110" y="740" width="38" height="52" rx="6"/>
+  </g>
+  <!-- gas lamps -->
+  <g id="anim-lamp" fill="#ffcf6b">
+    <circle cx="40" cy="900" r="10"/><circle cx="200" cy="700" r="10"/><circle cx="300" cy="560" r="10"/>
+  </g>
+</svg>

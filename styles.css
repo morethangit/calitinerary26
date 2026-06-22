@@ -440,6 +440,48 @@ button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-hi
 .link-row:hover { filter: brightness(0.97); }
 .link-row::after { content: "↗"; opacity: 0.6; }
 
+/* EXPERIENCE launch CTA — prominent dark gradient button (e.g. Disney guide) */
+.experience-cta {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 4px 0 18px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(120deg, #1b1438 0%, #3a1f4d 45%, #0e1a24 100%);
+  box-shadow: 0 10px 30px rgba(15, 31, 61, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.14s ease, box-shadow 0.2s ease;
+}
+.experience-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120px 80px at 12% 20%, rgba(198, 122, 94, 0.35), transparent 70%),
+    radial-gradient(140px 90px at 88% 90%, rgba(52, 192, 224, 0.30), transparent 70%);
+  pointer-events: none;
+}
+.experience-cta:active { transform: scale(0.985); }
+.experience-cta:hover { box-shadow: 0 14px 38px rgba(15, 31, 61, 0.36); }
+.exp-spark { font-size: 1.5rem; position: relative; animation: exp-twinkle 2.4s ease-in-out infinite; }
+.exp-body { display: flex; flex-direction: column; gap: 2px; flex: 1; position: relative; }
+.exp-label { font-family: "Syne", sans-serif; font-weight: 800; font-size: 1.06rem; letter-spacing: 0.2px; }
+.exp-sub { font-size: 0.78rem; opacity: 0.78; font-weight: 600; }
+.exp-go { font-size: 1.2rem; opacity: 0.85; position: relative; transition: transform 0.2s ease; }
+.experience-cta:hover .exp-go { transform: translateX(3px); }
+@keyframes exp-twinkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.18) rotate(8deg); opacity: 0.85; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .exp-spark { animation: none; }
+}
+
 /* Tips */
 .tips { display: grid; gap: 10px; }
 .tip {

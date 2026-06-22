@@ -222,6 +222,20 @@
     hero.appendChild(meta);
     card.appendChild(hero);
 
+    /* EXPERIENCE — prominent launch CTA for a custom standalone page (e.g. Disney) */
+    if (day.experience && day.experience.href) {
+      const exp = el("a", "experience-cta");
+      exp.href = day.experience.href;
+      exp.innerHTML =
+        '<span class="exp-spark">✨</span>' +
+        '<span class="exp-body">' +
+          '<span class="exp-label">' + esc(day.experience.label) + "</span>" +
+          (day.experience.sub ? '<span class="exp-sub">' + esc(day.experience.sub) + "</span>" : "") +
+        "</span>" +
+        '<span class="exp-go">→</span>';
+      card.appendChild(exp);
+    }
+
     /* SCHEDULE — each bullet may be a string or { time, text } */
     if (day.schedule && day.schedule.length) {
       const sec = section("🗓️", "Schedule");

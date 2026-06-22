@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" fill="none">
+  <!-- PLACEHOLDER train station (overture tunnel). Replace, keep anim- names. -->
+  <rect x="150" y="180" width="600" height="320" fill="#c9533f"/>
+  <rect x="120" y="150" width="660" height="50" fill="#a23e2f"/>
+  <path d="M120 150 L450 50 L780 150 Z" fill="#8a3327"/>
+  <!-- clock -->
+  <circle cx="450" cy="120" r="34" fill="#f4e9d2"/>
+  <line x1="450" y1="120" x2="450" y2="98" stroke="#3a2a22" stroke-width="4"/>
+  <line x1="450" y1="120" x2="468" y2="120" stroke="#3a2a22" stroke-width="4"/>
+  <!-- the two portals -->
+  <rect x="250" y="300" width="120" height="200" rx="60" fill="#1a1410"/>
+  <rect x="530" y="300" width="120" height="200" rx="60" fill="#1a1410"/>
+  <!-- chimney smoke -->
+  <g id="anim-smoke" fill="#e9e3d8" opacity="0.6">
+    <circle cx="700" cy="70" r="18"/><circle cx="730" cy="44" r="13"/>
+  </g>
+</svg>

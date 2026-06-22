@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#bfe3ff" />
+  <title>Disneyland · A Day of Magic</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Grand+Hotel&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="disney.css" />
+</head>
+<body>
+  <!-- z0 — living sky -->
+  <div id="sky" aria-hidden="true">
+    <div id="stars"></div>
+    <div id="celestial"><span id="sun"></span><span id="moon"></span></div>
+    <div id="clouds"></div>
+    <div id="tint"></div>
+  </div>
+
+  <!-- the scrolling world: props + trail are sized to the document in JS -->
+  <div id="scene">
+    <div id="props" aria-hidden="true"></div>
+
+    <svg id="trail" aria-hidden="true" preserveAspectRatio="none">
+      <path id="trailBase" fill="none" />
+      <path id="trailGlow" fill="none" />
+    </svg>
+    <div id="marker" aria-hidden="true"><span class="marker-core"></span><span class="marker-ring"></span></div>
+
+    <!-- overture + roadmap stops injected here -->
+    <main id="stops"></main>
+  </div>
+
+  <!-- sparkle FX -->
+  <canvas id="fx" aria-hidden="true"></canvas>
+
+  <!-- floating controls -->
+  <div id="hud">
+    <button id="infoBtn" class="round-btn" title="About this map" aria-label="About">i</button>
+    <div id="stampCount" class="stamp-count">0 of 0 stamps</div>
+    <button id="fxBtn" class="round-btn" title="Toggle sparkles" aria-label="Toggle sparkles">✦</button>
+  </div>
+  <button id="returnNow" class="return-now" hidden>✦ Return to Now</button>
+  <div id="aheadBanner" class="ahead-banner" hidden></div>
+
+  <!-- dedication / info overlay (first run) -->
+  <div id="info" class="overlay" hidden>
+    <div class="dedication">
+      <div class="ded-plaque">
+        <p class="ded-eyebrow">To all who come to this happy place</p>
+        <h1 class="ded-welcome">Welcome</h1>
+        <p class="ded-body" id="dedBody"></p>
+        <p class="ded-sign">— Walt Disney, July 17, 1955</p>
+      </div>
+      <div class="ded-sync" id="dedSync"></div>
+      <button id="enterBtn" class="enter-btn">Step inside →</button>
+    </div>
+  </div>
+
+  <!-- name picker -->
+  <div id="namegate" class="overlay" hidden>
+    <div class="overlay-card">
+      <div class="overlay-spark">✨</div>
+      <h2>Who's exploring?</h2>
+      <p>Pick your name so your party sees who's collected which stamps.</p>
+      <div id="nameChoices" class="name-choices"></div>
+      <form id="nameForm" class="name-form">
+        <input id="nameInput" type="text" placeholder="…or type your name" maxlength="14" autocomplete="off" />
+        <button type="submit">Start</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- testing panel (?test=1) -->
+  <div id="testpanel" class="testpanel" hidden>
+    <div class="tp-head">
+      <span class="tp-title">🧪 Testing</span>
+      <span id="tpClock" class="tp-clock">8:00 AM</span>
+      <button id="tpClose" class="tp-close" aria-label="Exit testing mode">✕</button>
+    </div>
+    <input id="tpScrub" class="tp-scrub" type="range" min="480" max="1440" step="1" value="480" />
+    <div class="tp-controls">
+      <button id="tpPlay" class="tp-btn">▶ Play</button>
+      <button class="tp-btn tp-speed" data-speed="60">60×</button>
+      <button class="tp-btn tp-speed" data-speed="600">600×</button>
+      <button id="tpLive" class="tp-btn">↺ Live</button>
+    </div>
+    <div class="tp-jumps">
+      <button class="tp-chip" data-min="480">Rope Drop</button>
+      <button class="tp-chip" data-min="718">VQ 11:58</button>
+      <button class="tp-chip" data-min="870">Hop</button>
+      <button class="tp-chip" data-min="1260">WoC</button>
+      <button class="tp-chip" data-min="1305">Night</button>
+    </div>
+    <div class="tp-controls">
+      <button id="tpRoom" class="tp-btn">Room: TEST</button>
+      <button id="tpReset" class="tp-btn">Reset stamps</button>
+      <button id="tpMotion" class="tp-btn">Reduce motion: off</button>
+    </div>
+  </div>
+  <button id="testpeek" class="testpeek" hidden title="Testing mode">🧪</button>
+
+  <script src="firebase-config.js"></script>
+  <script>
+    (function () {
+      var c = window.FIREBASE_CONFIG;
+      if (c && c.apiKey && c.apiKey !== "REPLACE_ME") {
+        document.write('<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"><\/script>');
+        document.write('<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"><\/script>');
+      }
+    })();
+  </script>
+  <script src="disney-data.js"></script>
+  <script src="disney.js"></script>
+</body>
+</html>

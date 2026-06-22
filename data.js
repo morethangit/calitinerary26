@@ -57,20 +57,22 @@ const TRIP = {
       tagline: "Fly into LAX, settle into Anaheim, prep for Disney.",
       theme: "anaheim",
       stay: { name: "Marriott Anaheim", map: "Marriott Anaheim", coords: { lat: 33.8025, lon: -117.9219 } },
-      drive: { from: "LAX", to: "Anaheim", duration: "~35 min", note: "Uber or rental car" },
+      drive: { from: "LAX", to: "Anaheim", duration: "~35 min", note: "" },
 
       schedule: [
-        "Fly into LAX — collect luggage, grab the rental car or rideshare",
-        "Drive or ride to Anaheim — check into the Marriott",
-        { time: "Evening", text: "Dinner near the hotel — rest up for rope drop tomorrow" },
+        { time: "8:30 AM", text: "Land in LAX" },
+        { time: "Morning", text: "Drive to the Anaheim Marriott, drop bags" },
+        { time: "Today", text: "Grab breakfast and find something to do - Yorbo Regional Park, Packing District, Muzeo Museum." },
+        { time: "Evening", text: "Dinner in Downtown Disney" },
         { time: "Tonight", text: "Download the Disneyland app & activate Lightning Lane Multi Pass" },
         { time: "Tonight", text: "Set alarms early — target the park by 8–9am for rope drop" },
       ],
 
       locations: [
         { icon: "🏨", name: "Marriott Anaheim", note: "Tonight's stay", map: "Marriott Anaheim" },
-        { icon: "🍽", name: "GrillSmoke BBQ", note: "Dinner — easy, family-friendly, near hotel", map: "GrillSmoke BBQ Anaheim" },
-        { icon: "🎢", name: "Disneyland Resort", note: "Where the magic starts tomorrow", map: "Disneyland Park Anaheim" },
+        { icon: "⛲", name: "Yorba Regional Park", note: "Park near Anaheim", map: "Yorba Regional Park" },
+        { icon: "🥫", name: "Packing District", note: "A restored 1919 citrus packing house turned food hall", map: "Anaheim Packing District" },
+        { icon: "🎢", name: "Disneyland Resort", note: "The Happiest Place on Earth™", map: "Disneyland Park Anaheim" },
       ],
 
       links: [
@@ -96,6 +98,8 @@ const TRIP = {
       theme: "anaheim",
       stay: { name: "Marriott Anaheim", map: "Marriott Anaheim", coords: { lat: 33.8025, lon: -117.9219 } },
       drive: "Park hours ~8am–midnight (check the app the night before)",
+
+      experience: { href: "disney.html", label: "Launch Disneyland Experience", sub: "Live timeline · ride quests · synced across all 4 phones" },
 
       schedule: [
         { time: "8 AM", text: "Rope drop at Disneyland — book a Lightning Lane the moment you tap in" },

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 1200" fill="none" preserveAspectRatio="xMaxYMax meet">
+  <!-- PLACEHOLDER Main Street row (right). Replace, keep anim- names. -->
+  <g fill="#cdb0c4">
+    <rect x="0" y="200" width="200" height="1000"/>
+    <rect x="120" y="420" width="180" height="780"/>
+    <rect x="240" y="640" width="160" height="560"/>
+  </g>
+  <g fill="#a584a0">
+    <path d="M0 200 L100 130 L200 200 Z"/>
+    <path d="M120 420 L210 360 L300 420 Z"/>
+    <path d="M240 640 L320 590 L400 640 Z"/>
+  </g>
+  <g fill="#ffe2a6">
+    <rect x="40" y="300" width="44" height="60" rx="6"/><rect x="120" y="300" width="44" height="60" rx="6"/>
+    <rect x="40" y="430" width="44" height="60" rx="6"/><rect x="120" y="430" width="44" height="60" rx="6"/>
+    <rect x="160" y="520" width="40" height="56" rx="6"/><rect x="230" y="520" width="40" height="56" rx="6"/>
+    <rect x="280" y="740" width="38" height="52" rx="6"/><rect x="340" y="740" width="38" height="52" rx="6"/>
+  </g>
+  <g id="anim-lamp" fill="#ffcf6b">
+    <circle cx="380" cy="900" r="10"/><circle cx="220" cy="700" r="10"/><circle cx="120" cy="560" r="10"/>
+  </g>
+</svg>
