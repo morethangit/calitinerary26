@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "firebase": "^12.15.0",
+    "vercel": "^54.14.2"
+  }
+}
