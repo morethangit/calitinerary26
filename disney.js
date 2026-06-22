@@ -85,6 +85,7 @@
   function savePartyLocal() { try { localStorage.setItem(lsParty, JSON.stringify(party)); } catch (e) {} }
   function isDone(id, g) { return !!(state[id] && state[id][g] && state[id][g].done); }
   function countDone(id) { var n = 0; GKEYS.forEach(function (g) { if (isDone(id, g)) n++; }); return n; }
+  function isSkipped(id) { return !!(state[id] && state[id].skip); }
 
   function initFirebase() {
     var cfg = window.FIREBASE_CONFIG;
@@ -108,7 +109,14 @@
     state[id][g] = done ? { done: true, at: Date.now(), rot: Math.round(Math.random() * 60 - 30) } : { done: false };
     saveLocal();
     if (db) { try { db.child(id + "/" + g).set(state[id][g]); } catch (e) {} }
-    repaintSign(id); refreshSheet(id); updateNow(); refreshAhead();
+    repaintSign(id); refreshSheet(id); updateNow(); refreshAhead(); updateTrailProgress();
+  }
+  function setSkip(id, val) {
+    if (!state[id]) state[id] = {};
+    state[id].skip = !!val;
+    saveLocal();
+    if (db) { try { db.child(id + "/skip").set(!!val); } catch (e) {} }
+    repaintSign(id); refreshSheet(id); refreshAhead(); updateTrailProgress();
   }
   function pushParty() { savePartyLocal(); if (dbParty) { try { dbParty.set(party); } catch (e) {} } repaintParty(); }
 
@@ -165,16 +173,12 @@
   }
 
   function buildOverture() {
-    var sh = sceneShell({ id: "overture", motion: "walk", beats: 1 });
+    var sh = sceneShell({ id: "overture", motion: "logo", beats: 1 });
     var comp = sh.back;
-    // A walk down Main Street, like standing on a turning cylinder: the station
-    // tunnel lifts overhead, the building rows slide off either side, and the
-    // castle grows up out of the center distance from behind them.
+    // The opening: a Disneyland logo over the dawn sky. As you scroll it lifts and
+    // fades, and you descend into Rope Drop where the castle is revealed (once).
     addLayer(comp, { klass: "bg", depth: 0.3, exit: "fade" });
-    addLayer(comp, { klass: "fg walk-castle", role: "walk-castle", depth: 0.5, prop: "castle" });
-    addLayer(comp, { klass: "fg tunnel", role: "tunnel", depth: 0.9, prop: "train-station" });
-    addLayer(comp, { klass: "fg street street-l", role: "street-left", basex: "0%", prop: "mainstreet-left" });
-    addLayer(comp, { klass: "fg street street-r", role: "street-right", basex: "0%", prop: "mainstreet-right" });
+    addLayer(comp, { klass: "logo", role: "logo", prop: "disneyland-logo", css: "left:50%;top:30%;bottom:auto;width:min(82vw,520px);transform-origin:50% 50%" });
     var stage = sh.stage;
     var title = document.createElement("div");
     title.className = "scene-title";
@@ -187,7 +191,7 @@
     cue.className = "beat";
     cue.innerHTML = '<p class="whisper">Scroll to walk into the park. Tap any sign to open it; tap away to close.</p>';
     stage.appendChild(cue);
-    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "overture", phase: "dawn", name: "Main Street", motion: "walk", beats: [{ el: title, kind: "title" }, { el: cue, kind: "whisper", idx: 0, n: 1 }] });
+    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "overture", phase: "dawn", name: "Main Street", motion: "logo", beats: [{ el: title, kind: "title" }, { el: cue, kind: "whisper", idx: 0, n: 1 }] });
   }
 
   function buildScene(block) {
@@ -271,12 +275,14 @@
       var pip = el.querySelectorAll(".pip")[i];
       if (pip) pip.classList.toggle("on", isDone(id, g));
     });
-    var n = countDone(id);
+    var n = countDone(id), skip = isSkipped(id);
     el.classList.toggle("complete", n === 4);
+    el.classList.toggle("glow", n >= 1);            // any one person checking it off lights it up
+    el.classList.toggle("skipped", skip && n === 0);
     var hint = el.querySelector(".sign-hint");
-    if (hint) hint.textContent = n ? n + " of 4 done" : "tap to open";
+    if (hint) hint.textContent = n ? n + " of 4 done" : (skip ? "skipped" : "tap to open");
   }
-  function repaintAll() { Object.keys(signEls).forEach(repaintSign); if (curSheetId) refreshSheet(curSheetId); updateNow(); refreshAhead(); renderPassport(); }
+  function repaintAll() { Object.keys(signEls).forEach(repaintSign); if (curSheetId) refreshSheet(curSheetId); updateNow(); refreshAhead(); updateTrailProgress(); renderPassport(); }
   function repaintParty() { renderPassport(); if (curSheetId) refreshSheet(curSheetId); }
 
   function questById(id) { for (var i = 0; i < BLOCKS.length; i++) { var qs = BLOCKS[i].quests || []; for (var j = 0; j < qs.length; j++) if (qs[j].id === id) return qs[j]; } return null; }
@@ -287,9 +293,16 @@
   function openSheet(id) {
     curSheetId = id;
     refreshSheet(id);
-    $("sheet").hidden = false;
+    var sh = $("sheet"); sh.classList.remove("closing"); sh.hidden = false;
+    updateUpNext(active);                              // hide the nav bar while the sheet is up
   }
-  function closeSheet() { $("sheet").hidden = true; curSheetId = null; }
+  var sheetCloseT = null;
+  function closeSheet() {
+    var sh = $("sheet"); if (sh.hidden) return;
+    sh.classList.add("closing");                       // play the slide-down, then hide
+    clearTimeout(sheetCloseT);
+    sheetCloseT = setTimeout(function () { sh.hidden = true; sh.classList.remove("closing"); curSheetId = null; updateUpNext(active); }, 280);
+  }
   function refreshSheet(id) {
     if (curSheetId !== id && $("sheet").hidden) return;
     var q = questById(id), block = blockOf(id);
@@ -319,6 +332,10 @@
     var others = GKEYS.filter(function (g) { return g !== mine; });
     html += '<div class="sheet-section-label">Log for the group</div>';
     others.forEach(function (g) { html += guestRow(g, false); });
+    // skip control — advances the day/trail without anyone stamping it
+    var skipped = isSkipped(id);
+    html += '<button class="sheet-skip' + (skipped ? " on" : "") + '" id="sheetSkip">' +
+      svg(skipped ? "star" : "move") + " " + (skipped ? "Skipped &mdash; tap to un-skip" : "Activity Skipped") + "</button>";
     var c = $("sheetContent");
     c.innerHTML = html;
     popGuest = null;
@@ -331,23 +348,43 @@
         setGuest(id, g, willDo);                          // then re-render the sheet (stamp pops in)
       });
     });
+    var sk = $("sheetSkip");
+    if (sk) sk.addEventListener("click", function () {
+      var willSkip = !isSkipped(id);
+      setSkip(id, willSkip);
+      if (willSkip) { closeSheet(); navToActivity(1); }   // skipping advances to the next activity
+    });
   }
 
   /* ----------------------------------------------------------- scene engine */
-  var active = 0, ticking = false;
+  var active = 0, ticking = false, docScroll = 1;
+  // cache every scene's geometry once (build / resize) so onScroll never reads layout —
+  // interleaving layout reads with style writes per frame is what made scrolling jitter.
+  function measure() {
+    var V = vh();
+    for (var i = 0; i < scenes.length; i++) {
+      var el = scenes[i].el;
+      scenes[i].top = el.offsetTop;
+      scenes[i].h = el.offsetHeight;
+    }
+    docScroll = Math.max(1, (document.body.scrollHeight || document.documentElement.scrollHeight) - V);
+    buildActivityIndex();
+    layoutTrail();
+    updateTrailProgress();
+  }
+
   function onScroll() {
     if (ticking) return; ticking = true;
     requestAnimationFrame(function () {
       ticking = false;
-      var sy = window.scrollY, center = sy + vh() / 2, V = vh();
+      var sy = window.scrollY, V = vh(), center = sy + V / 2;
       var act = 0, actP = 0;
-      for (var i = 0; i < scenes.length; i++) {
-        var sec = scenes[i].el, top = sec.offsetTop, h = sec.offsetHeight;
+      for (var i = 0; i < scenes.length; i++) {       // reads from cache only — pure writes below
+        var top = scenes[i].top || 0, h = scenes[i].h || V;
         var p = clamp((sy - top) / Math.max(1, h - V), 0, 1);
         scenes[i]._p = p;
         if (center >= top && center < top + h) { act = i; actP = p; }
-        // reveal beats + motion only for near scenes (perf + will-change scoping)
-        var near = (top - sy < V * 1.5 && top + h - sy > -V * 0.5);
+        var near = (top - sy < V * 1.6 && top + h - sy > -V * 0.6);
         scenes[i].el.classList.toggle("live", near);
         if (near) { applyMotion(scenes[i], p); revealBeats(scenes[i], p); }
       }
@@ -365,26 +402,22 @@
       rs.setProperty("--moon-op", clamp((dark - 0.4) / 0.6, 0, 1).toFixed(2));
       var acc = scenes[act].block ? DAY.zones[scenes[act].block.zone].accent : "#c98a5e";
       rs.setProperty("--zone", acc); rs.setProperty("--tint", mixA(acc, 0.16));
-      var p = clamp(center / Math.max(1, document.body.scrollHeight), 0, 1);
+      var p = clamp(center / (docScroll + V), 0, 1);    // cached — no scrollHeight read
       rs.setProperty("--sun-x", (10 + 78 * p).toFixed(1) + "%");
       rs.setProperty("--sun-y", ((0.66 - 0.46 * Math.sin(p * Math.PI)) * 100).toFixed(1) + "vh");
       rs.setProperty("--moon-x", (12 + 76 * p).toFixed(1) + "%");
       rs.setProperty("--moon-y", ((0.6 - 0.4 * Math.sin(p * Math.PI)) * 100).toFixed(1) + "vh");
-      // now-plate land + return-now visibility
+      // now-plate land + nav state
       $("nowLand").textContent = scenes[act].name;
       document.body.classList.toggle("at-end", act === scenes.length - 1);
-      var un = $("upNext");
-      if (un) {
-        var isLast = act >= scenes.length - 1;
-        un.hidden = isLast || !$("sheet").hidden;
-        if (!isLast) $("upNextName").textContent = scenes[act + 1].name;
-      }
+      updateUpNext(act);
       updateReturnNow();
+      updateTrailMarker(sy);
     });
   }
 
   // every layer parallaxes by depth, grows as you pass, then exits cleanly off-screen.
-  // overture layers (data-role) follow a bespoke "walk down Main Street" path.
+  // the overture logo (data-role="logo") lifts and fades as you descend into Rope Drop.
   function applyMotion(scene, p) {
     var layers = scene.back.querySelectorAll(".layer");
     for (var i = 0; i < layers.length; i++) {
@@ -393,20 +426,10 @@
       var depth = parseFloat(L.dataset.depth) || 1;
       var basex = L.dataset.basex || "-50%";
       var tx = 0, ty = 0, scale = 1, op = 1, rot = 0;
-      if (role === "walk-castle") {
-        scale = 0.55 + p * 1.25;             // grows up out of the distance
-        ty = -p * 4;
-        op = 1;                              // sits behind the rows, revealed as they part
-      } else if (role === "tunnel") {
-        scale = 1.12 + p * 0.85;
-        ty = -p * 155;                       // you pass up under the station
-        op = clamp(1 - (p - 0.14) / 0.18, 0, 1);
-      } else if (role === "street-left" || role === "street-right") {
-        var dir = role === "street-right" ? 1 : -1;
-        scale = 1 + p * 1.05;
-        tx = dir * p * 92;                   // each row slides off its own side as you walk
-        ty = -p * 6;
-        op = clamp(1 - (p - 0.82) / 0.18, 0, 1);
+      if (role === "logo") {
+        scale = 1 + p * 0.18;                // breathes up a touch
+        ty = -p * 60;                        // lifts away as you scroll down
+        op = clamp(1 - (p - 0.20) / 0.45, 0, 1);
       } else {
         var zoom = scene.motion === "zoom";
         rot = scene.motion === "sway" ? Math.sin(p * Math.PI * 2) * 2
@@ -426,7 +449,7 @@
           else { op *= (1 - ex); ty -= 12 * ex; }
         }
       }
-      L.style.transform = "translateX(calc(" + basex + " + " + tx.toFixed(1) + "%)) translateY(" + ty.toFixed(1) + "%) rotate(" + rot.toFixed(2) + "deg) scale(" + scale.toFixed(3) + ")";
+      L.style.transform = "translateX(calc(" + basex + " + " + tx.toFixed(1) + "%)) translateY(" + ty.toFixed(1) + "%) rotate(" + rot.toFixed(2) + "deg) scale(" + scale.toFixed(3) + ") translateZ(0)";
       L.style.opacity = op.toFixed(2);
     }
   }
@@ -466,6 +489,7 @@
   }
 
   /* ----------------------------------------------------------- now / nav */
+  function vw() { return window.innerWidth; }
   function nowSceneIndex() {
     var min = now(), idx = 0;
     for (var i = 0; i < scenes.length; i++) { if (scenes[i].block && scenes[i].block.startMin <= min) idx = i; }
@@ -476,14 +500,22 @@
     var rn = $("returnNow"); if (!rn) return;
     rn.hidden = (active === nowSceneIndex());
   }
+  // the middle pill = "up next" header jump; the bar hides while the sheet is open
+  function updateUpNext(act) {
+    var bar = $("navbar"); if (bar) bar.hidden = !$("sheet").hidden;
+    var isLast = act >= scenes.length - 1;
+    var nm = $("upNextName"); if (nm) nm.textContent = isLast ? "The journal" : scenes[act + 1].name;
+  }
+  function sceneTop(i) { return scenes[i] ? (scenes[i].top != null ? scenes[i].top : scenes[i].el.offsetTop) : 0; }
+  function sceneH(i) { return scenes[i] ? (scenes[i].h != null ? scenes[i].h : scenes[i].el.offsetHeight) : vh(); }
   function scrollToScene(i, smooth) {
-    var sec = scenes[i] && scenes[i].el; if (!sec) return;
-    window.scrollTo({ top: sec.offsetTop + sec.offsetHeight * 0.18, behavior: smooth === false ? "auto" : "smooth" });
+    if (!scenes[i]) return;
+    window.scrollTo({ top: sceneTop(i) + sceneH(i) * 0.18, behavior: smooth === false ? "auto" : "smooth" });
   }
   // crossfade jump: fade a curtain in, hop the scroll behind it, fade back out — never a long jarring scroll
   function jumpTo(i) {
-    var sec = scenes[i] && scenes[i].el; if (!sec) return;
-    var target = sec.offsetTop + sec.offsetHeight * 0.18;
+    if (!scenes[i]) return;
+    var target = sceneTop(i) + sceneH(i) * 0.18;
     if (Math.abs(target - window.scrollY) < vh() * 0.9) { scrollToScene(i); return; } // close: just smooth-scroll
     var curtain = $("curtain");
     curtain.classList.add("show");
@@ -495,20 +527,89 @@
     }, 300);
   }
 
+  /* --------- activity index: every quest as a scroll target (nav + trail) --------- */
+  var activities = [];   // [{ id, sceneIdx, idx, n, centerP, targetY, frac }]
+  function buildActivityIndex() {
+    activities = [];
+    for (var i = 0; i < scenes.length; i++) {
+      var s = scenes[i]; if (!s.block) continue;
+      s.beats.forEach(function (b) {
+        if (b.kind !== "stop") return;
+        var step = (INFO_END - INFO_START) / Math.max(1, b.n || 1);
+        var centerP = INFO_START + step * ((b.idx || 0) + 0.5);
+        var targetY = sceneTop(i) + Math.max(0, sceneH(i) - vh()) * centerP;
+        activities.push({ id: b.id, sceneIdx: i, idx: b.idx, n: b.n, centerP: centerP, targetY: targetY, frac: clamp(targetY / docScroll, 0, 1) });
+      });
+    }
+  }
+  function smoothTo(y) { window.scrollTo({ top: Math.max(0, Math.round(y)), behavior: "smooth" }); }
+  // up/down circles step one activity at a time (Indiana Jones → "tap in, book Space Mountain")
+  function navToActivity(dir) {
+    if (!activities.length) { scrollToScene(clamp(active + (dir > 0 ? 1 : -1), 0, scenes.length - 1)); return; }
+    var sy = window.scrollY, eps = 10, i;
+    if (dir > 0) {
+      for (i = 0; i < activities.length; i++) if (activities[i].targetY > sy + eps) { smoothTo(activities[i].targetY); return; }
+      scrollToScene(scenes.length - 1);                 // past the last activity → the journal
+    } else {
+      for (i = activities.length - 1; i >= 0; i--) if (activities[i].targetY < sy - eps) { smoothTo(activities[i].targetY); return; }
+      smoothTo(0);                                      // before the first → the overture
+    }
+  }
+
+  /* --------- the trail: a swaying gold path + marker that glows with progress --------- */
+  var trailSvg, trailBase, trailGlow, marker, trailWrap, glowLen = 0, trailBand = { top: 70, h: 600 }, trailNodeEls = {};
+  function swayAmp() { return clamp(vw() * 0.05, 14, 34); }
+  function swayX(y) { return vw() / 2 + swayAmp() * Math.sin(y / 150); }
+  function layoutTrail() {
+    trailSvg = trailSvg || $("trail"); if (!trailSvg) return;
+    trailBase = trailBase || $("trailBase"); trailGlow = trailGlow || $("trailGlow");
+    marker = marker || $("marker"); trailWrap = trailWrap || $("trailNodes");
+    var W = vw(), V = vh();
+    trailBand = { top: 72, h: Math.max(120, V - 72 - 104) };   // clear the topbar + bottom navbar
+    trailSvg.setAttribute("width", W); trailSvg.setAttribute("height", V);
+    trailSvg.setAttribute("viewBox", "0 0 " + W + " " + V);
+    var d = "M " + swayX(trailBand.top).toFixed(1) + " " + trailBand.top.toFixed(1);
+    for (var y = trailBand.top + 12; y <= trailBand.top + trailBand.h; y += 12) d += " L " + swayX(y).toFixed(1) + " " + y.toFixed(1);
+    trailBase.setAttribute("d", d); trailGlow.setAttribute("d", d);
+    glowLen = trailGlow.getTotalLength(); trailGlow.style.strokeDasharray = glowLen;
+    if (trailWrap) {
+      trailWrap.innerHTML = ""; trailNodeEls = {};
+      activities.forEach(function (a) {
+        var y = trailBand.top + a.frac * trailBand.h, x = swayX(y);
+        var nd = document.createElement("div"); nd.className = "trail-node";
+        nd.style.left = x.toFixed(1) + "px"; nd.style.top = y.toFixed(1) + "px";
+        trailWrap.appendChild(nd); trailNodeEls[a.id] = nd;
+      });
+    }
+  }
+  function updateTrailMarker(sy) {
+    if (!marker || !glowLen) return;
+    var frac = clamp(sy / docScroll, 0, 1);
+    var y = trailBand.top + frac * trailBand.h;
+    marker.style.top = y.toFixed(1) + "px"; marker.style.left = swayX(y).toFixed(1) + "px";
+  }
+  function updateTrailProgress() {
+    if (!trailGlow || !glowLen) return;
+    var maxFrac = 0;
+    activities.forEach(function (a) {
+      var done = countDone(a.id) > 0, skip = isSkipped(a.id);
+      var el = trailNodeEls[a.id];
+      if (el) { el.classList.toggle("done", done); el.classList.toggle("skip", !done && skip); }
+      if (done || skip) maxFrac = Math.max(maxFrac, a.frac);
+    });
+    trailGlow.style.strokeDashoffset = (glowLen * (1 - maxFrac)).toFixed(1);
+  }
+
   /* ----------------------------------------------------------- ahead-of-schedule */
   function refreshAhead() {
-    var min = now(), expected = 0, ahead = 0;
-    BLOCKS.forEach(function (b) {
-      (b.quests || []).forEach(function (q) {
-        if (b.startMin <= min) expected++;
-        if (countDone(q.id) > 0 && b.startMin > min) ahead++;
-      });
-    });
-    var done = 0; BLOCKS.forEach(function (b) { (b.quests || []).forEach(function (q) { if (countDone(q.id) > 0) done++; }); });
+    var min = now(), expected = 0;
+    BLOCKS.forEach(function (b) { (b.quests || []).forEach(function () { if (b.startMin <= min) expected++; }); });
+    var done = 0; BLOCKS.forEach(function (b) { (b.quests || []).forEach(function (q) { if (countDone(q.id) > 0 || isSkipped(q.id)) done++; }); });
     var surplus = done - expected;
     var banner = $("aheadBanner");
     if (surplus >= 2) { banner.hidden = false; banner.textContent = "You're ahead of schedule — " + surplus + " stops of bonus magic!"; }
     else banner.hidden = true;
+    if (marker) marker.classList.toggle("ahead", surplus >= 2);
   }
 
   /* ----------------------------------------------------------- passport / journal */
@@ -552,7 +653,7 @@
     document.querySelectorAll(".layer[data-prop]").forEach(function (el) {
       var name = el.dataset.prop; if (!name) return;
       if (svgCache[name]) { el.innerHTML = svgCache[name]; setPA(el); return; }
-      fetch("assets/disney/" + name + ".svg?v=10").then(function (r) { return r.ok ? r.text() : ""; })
+      fetch("assets/disney/" + name + ".svg?v=11").then(function (r) { return r.ok ? r.text() : ""; })
         .then(function (t) { if (t) { svgCache[name] = t; el.innerHTML = t; setPA(el); } }).catch(function () {});
     });
   }
@@ -753,10 +854,10 @@
     $("dirBtn").addEventListener("click", function () { updateDirCounts(); openOverlay("directory"); });
     $("setBtn").addEventListener("click", function () { syncSettings(); openOverlay("settings"); });
     $("dirSummary").addEventListener("click", function () { closeOverlay("directory"); jumpTo(scenes.length - 1); });
-    $("navPrev").addEventListener("click", function () { scrollToScene(Math.max(0, active - 1)); });
-    $("navNext").addEventListener("click", function () { scrollToScene(Math.min(scenes.length - 1, active + 1)); });
+    $("navPrev").addEventListener("click", function () { navToActivity(-1); });   // up = previous activity
+    $("navNext").addEventListener("click", function () { navToActivity(1); });    // down = next activity
     $("returnNow").addEventListener("click", function () { jumpTo(nowSceneIndex()); });
-    $("upNext").addEventListener("click", function () { scrollToScene(Math.min(scenes.length - 1, active + 1)); });
+    $("upNext").addEventListener("click", function () { scrollToScene(Math.min(scenes.length - 1, active + 1)); }); // middle pill = next section
     $("alertsToggle").addEventListener("click", requestAlerts);
     $("soundToggle").addEventListener("click", function () { soundOn = !soundOn; localStorage.setItem("disney_sound", soundOn ? "1" : "0"); if (soundOn) { audio(); sound("chime"); } syncSettings(); });
     $("fxToggle").addEventListener("click", function () { var off = document.body.classList.toggle("no-fx"); localStorage.setItem("disney_fx", off ? "0" : "1"); syncSettings(); });
@@ -766,8 +867,9 @@
     $("enterBtn").addEventListener("click", function () { closeOverlay("info"); try { localStorage.setItem("disney_seen", "1"); } catch (e) {} });
 
     initTesting();
+    measure();                                          // cache scene geometry + build trail/activity index
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", function () { sizeCanvas(); onScroll(); });
+    window.addEventListener("resize", function () { sizeCanvas(); measure(); onScroll(); });
     document.addEventListener("visibilitychange", function () { if (!document.hidden) onScroll(); });
     setInterval(function () { if (!(test.active && test.playing)) { updateNow(); updateReturnNow(); checkLiveDeadline(); } }, 20000);
     requestAnimationFrame(testLoop);
@@ -780,6 +882,7 @@
     updateNow(); onScroll();
 
     setTimeout(function () {
+      measure();                                        // re-cache once fonts/layout settle
       onScroll();
       if (!localStorage.getItem("disney_intro")) { window.scrollTo(0, 0); buildIntro(); $("intro").hidden = false; }
       else scrollToScene(nowSceneIndex(), false);

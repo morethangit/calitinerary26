@@ -7,14 +7,24 @@ flat placeholder SVGs; you replace them **file-for-file** (same names) and it ju
 
 ## 0. How the art is used (read first)
 
-- Each **land = a full-screen scene**. As you scroll a land, its art **parallaxes** (near
-  pieces move faster than far pieces), grows, then **exits** off-screen so there are never
-  hard edges. That's why each land wants **2–3 layered files**, not one flat picture.
-- Layers per land: **`<land>-bg.svg`** (distant), optional **`<land>-mid.svg`**, and
-  **`<land>-fg.svg`** (nearest/biggest). If you only make one, name it `<land>-fg.svg`.
-  A single flat `<land>.svg` also still works (no parallax) — but layers are the magic.
-- The code already fades the **bottom ~22%** of every layer to transparent (a mask), so you
-  don't need to feather the bottom — just don't put important detail in the lowest 22%.
+- Each **land = a full-screen scene**. The land's **foreground prop** (one SVG) stands on the
+  ground and **fills the screen**: as you scroll it rises and grows gently, then **exits**
+  off-screen (left / right / up / fade) so there are never hard edges.
+- **Sizing is automatic and aspect-aware.** The prop is bottom-anchored and *contained* into a
+  box that's ~**94% of screen height** tall and up to ~**150vw** wide (`preserveAspectRatio`
+  is forced to `xMidYMax meet` in code). Practical consequence:
+  - **Draw the art to FILL its viewBox.** Empty margins = a smaller-looking prop.
+  - **Portrait / squarish viewBoxes cover the most** (they're limited by height → full-tall).
+    A very **wide** viewBox sits **shorter** (it's limited by width). So: tall things (castle,
+    mountain, mansion) → tall viewBox; wide vistas (esplanade, a skyline) → wide viewBox, and
+    expect them to occupy the lower part of the screen.
+- There's already a **procedural distant horizon** behind every prop, tinted to the land — so a
+  separate `-bg` file is **not** required. One foreground file per land is all the engine loads
+  (filenames are listed below; replace **file-for-file**, same name).
+- The code fades the **bottom ~22%** of the prop to transparent (a mask), so you don't need to
+  feather the bottom — just don't put important detail in the lowest 22%.
+- A few scenes layer **two props** (see Morning Sweep) or use the **bespoke Main Street walk**
+  (see §4) — those are wired in code; the table tells you which files feed them.
 
 ## 1. Global rules
 
@@ -31,7 +41,9 @@ flat placeholder SVGs; you replace them **file-for-file** (same names) and it ju
 - **Color:** use the land's accent + the time-of-day sky (swatches below) so pieces sit in
   the scene. Background pieces should be lower-contrast/cooler (they're "far").
 - **Drop-in:** put files in `assets/disney/`, keep the exact filename, then bump the cache
-  number: in `disney.html` change `?v=7` → `?v=8` (etc.) on the css/js/data tags.
+  number: in `disney.html` change the `?v=N` on the css/js/data tags (currently `?v=11`) to the
+  next number, and bump the matching `.svg?v=N` in `disney.js`'s `loadBackdrops` so the new art
+  isn't served from cache.
 
 ## 2. Color swatches
 
@@ -67,41 +79,61 @@ flat placeholder SVGs; you replace them **file-for-file** (same names) and it ju
 
 ## 3. Land art — per scene
 
-Each row: the land, its **fg artboard** (px), **exit** direction (how it leaves the screen),
-and suggested **`anim-` groups**. Make a matching `-bg.svg` (wide + short, e.g. 1200×520,
-distant silhouette) for parallax. fg depth = 1.0, bg depth ≈ 0.35 (handled in code).
+One file per land (exact name in **file**). The **viewBox** column is the current placeholder's
+box and the recommended proportion — keep roughly that shape so the auto-sizing fills the screen
+(see §0: tall box → tall on screen, wide box → wide/short). **exit** = the direction the prop
+leaves the screen as you scroll out of the land. Fill the box; the bottom ~22% fades.
 
-| Land | fg file | fg viewBox | exit | suggested `anim-` groups |
+| Land | file | viewBox | exit | suggested `anim-` groups |
 |---|---|---|---|---|
-| Rope Drop (castle) | `castle-fg.svg` | 800×1000 | left | `anim-flag`, `anim-twinkle`, `anim-glow` |
-| Morning Sweep | `space-mountain-fg.svg` | 800×600 | right | `anim-star`, `anim-glow` (+ orbit, §5) |
-| New Orleans Sq | `haunted-mansion-fg.svg` | 700×800 | left | `anim-ghost`, `anim-window` |
-| WoC Virtual Queue | `nos-lantern-fg.svg` | 700×800 | fade | `anim-glow` |
-| Lunch (Cafe Orleans) | `cafe-orleans-fg.svg` | 800×600 | right | `anim-lantern` |
-| Galaxy's Edge | `galaxys-edge-fg.svg` | 900×600 | left | `anim-lights`, `anim-steam` (+ orbit) |
-| Hop to DCA | `esplanade-fg.svg` | 900×500 | up | `anim-glow` |
-| DCA Afternoon (Cars) | `cars-land-fg.svg` | 900×600 | right | `anim-neon`, `anim-car` |
-| Dinner (Pixar Pier) | `pixar-pier-fg.svg` | 800×700 | left | `anim-wheel`, `anim-coaster` |
-| Wind-Down (Avengers) | `avengers-fg.svg` | 700×800 | right | `anim-window`, `anim-beam` (+ orbit) |
-| Position (Paradise Bay) | `paradise-bay-fg.svg` | 900×600 | fade | `anim-water`, `anim-fountain` |
-| World of Color | `world-of-color-fg.svg` | 900×600 | up | `anim-fountain`, `anim-color` |
-| Hop Back (night castle) | reuses `castle` | — | left | — |
-| Night Session | `fireworks-fg.svg` | 600×600 | fade | `anim-burst` |
+| Rope Drop (castle) | `castle.svg` | 800×1000 | left | `anim-flag`, `anim-twinkle`, `anim-glow` |
+| Morning Sweep ① | `space-mountain.svg` | 800×600 | up (lifts off ~40%) | `anim-star`, `anim-glow` (+ orbit, §5) |
+| Morning Sweep ② | `matterhorn.svg` | 700×800 | left | `anim-snow`, `anim-twinkle` |
+| New Orleans Sq | `haunted-mansion.svg` | 700×800 | left | `anim-ghost`, `anim-window` |
+| WoC Virtual Queue | `nos-lantern.svg` | 700×800 | fade | `anim-glow` |
+| Lunch (Cafe Orleans) | `cafe-orleans.svg` | 800×600 | right | `anim-lantern` |
+| Galaxy's Edge | `galaxys-edge.svg` | 820×760 | left | `anim-lights`, `anim-steam`, `anim-glow` (+ orbit) |
+| Hop to DCA | `esplanade.svg` | 820×680 | up | `anim-flag`, `anim-glow` |
+| DCA Afternoon (Cars) | `cars-land.svg` | 900×600 | right | `anim-neon`, `anim-car` |
+| Dinner (Pixar Pier) | `pixar-pier.svg` | 800×700 | left | `anim-wheel`, `anim-coaster` |
+| Wind-Down (Avengers) | `avengers.svg` | 700×800 | right | `anim-window`, `anim-beam` (+ orbit) |
+| Position (Paradise Bay) | `paradise-bay.svg` | 900×600 | fade | `anim-water`, `anim-fountain` |
+| World of Color | `world-of-color.svg` | 900×600 | up | `anim-fountain`, `anim-color` |
+| Hop Back (night castle) | reuses `castle.svg` | — | left | — |
+| Night Session | `fireworks.svg` | 600×600 | fade | `anim-burst` |
 
-> Note: today these are single files named without `-fg` (e.g. `castle.svg`). When you add a
-> `-fg`/`-bg` pair, **also rename or remove the old single file** so it doesn't win. (Tell me
-> and I'll flip the loader to prefer layered names — 1-line change.)
+> **The castle (`castle.svg`) is the day's signature reveal.** It is *not* shown in the overture
+> anymore — you scroll down and first see it at **Rope Drop**, then it returns at night for the
+> **Hop Back**. Same file both times (day vs. night is just the sky), so keep it readable on a
+> dark sky too.
 
-## 4. Main Street (the overture)
+> **Morning Sweep is a two-prop scene:** Space Mountain holds for the first ~40% then lifts
+> straight up (rocket exit); the **Matterhorn** rises in behind it and carries the rest of the
+> scene. Both are normal files — the sequencing lives in `disney-data.js` (`meta.landmark2` +
+> `meta.leave`). To add a second prop to another land, copy that pattern.
+>
+> **No `-bg`/`-fg` split anymore.** The distant horizon is procedural; just deliver the one
+> named file per land. Want a real painted distant layer instead of the procedural one? Ping me
+> and I'll add a `-bg` slot back (it's a small loader change).
 
-Three pieces compose the opening "walk in," each its own file & exit:
+## 4. The overture (opening logo)
 
-| Piece | file | viewBox | exit | `anim-` |
-|---|---|---|---|---|
-| Left building row | `mainstreet-left.svg` | 420×1200 | left | `anim-lamp` |
-| Right building row | `mainstreet-right.svg` | 420×1200 | right | `anim-lamp` |
-| Train station + tunnel | `train-station.svg` | 900×500 | up | `anim-smoke` |
-| Castle (distant focal pt) | `castle.svg` | 800×1000 | left | `anim-flag`, `anim-twinkle` |
+The opening is just a **Disneyland logo** centered over the dawn sky with the "A Park Day"
+title and the Main Street tunnel quote. As you scroll, the logo lifts and fades and you descend
+into **Rope Drop**, where the castle is revealed for the first time.
+
+| Piece | file | viewBox | how it moves |
+|---|---|---|---|
+| Logo | `disneyland-logo.svg` | ~560×270 (wide wordmark) | centered ~30% down; breathes up a touch and fades out as you scroll |
+
+- Deliver it **transparent**, centered in the viewBox, sized to read on a light dawn sky (it gets
+  a soft drop-shadow in code). It is **not** edge-masked, so it can bleed to the artboard edges.
+- The current file is a placeholder wordmark (`Disneyland` + "PLACEHOLDER LOGO"). Replace it
+  file-for-file. Convert any text to outlines on export.
+
+> The old Main Street walk (two building rows + a train-station tunnel) was removed — those files
+> (`mainstreet-left/right.svg`, `train-station.svg`) are gone. The castle now lives only at Rope
+> Drop and the night Hop Back (see §3).
 
 ## 5. Orbiting decoration (Tomorrowland / Batuu / Avengers)
 
@@ -135,8 +167,8 @@ I'll special-case it.
 
 ## 8. Priority order
 
-1. `castle` (fg+bg) — it's the first thing guests see and reappears at night.
-2. `mainstreet-left` / `mainstreet-right` / `train-station` — the opening sequence.
+1. `disneyland-logo` — the very first thing guests see (overture).
+2. `castle` — the signature reveal at Rope Drop; reappears at night for the Hop Back.
 3. The official **Lightning Lane logo** + category icons.
-4. The remaining land `-fg`/`-bg` pairs (any order; each improves its scene independently).
+4. The remaining land props (any order; each improves its scene independently).
 5. `orbit`, intro splash, marker/sparkle — flair.

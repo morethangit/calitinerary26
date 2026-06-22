@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Lobster+Two:ital,wght@0,400;0,700;1,700&family=Righteous&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="disney.css?v=10" />
+  <link rel="stylesheet" href="disney.css?v=11" />
 </head>
 <body>
   <!-- living sky (time of day) -->
@@ -30,6 +30,11 @@
   <!-- sparkle fx -->
   <canvas id="fx" aria-hidden="true"></canvas>
 
+  <!-- the trail: a swaying gold path + pulsing marker that glows as activities complete -->
+  <svg id="trail" aria-hidden="true" preserveAspectRatio="none"><path id="trailBase" fill="none"/><path id="trailGlow" fill="none"/></svg>
+  <div id="trailNodes" aria-hidden="true"></div>
+  <div id="marker" aria-hidden="true"><span class="marker-core"></span><span class="marker-ring"></span></div>
+
   <!-- top bar: directory · current land · settings -->
   <header id="topbar">
     <button id="dirBtn" class="ghost-btn" aria-label="Park directory" data-icon="map"></button>
@@ -37,16 +42,16 @@
     <button id="setBtn" class="ghost-btn" aria-label="Settings" data-icon="gear"></button>
   </header>
 
-  <!-- integrated prev/next signpost arrows -->
-  <button id="navPrev" class="signpost-arrow up" aria-label="Previous land"><span data-icon="chevron-up"></span></button>
-  <button id="navNext" class="signpost-arrow down" aria-label="Next land"><span data-icon="chevron-down"></span></button>
-
   <button id="returnNow" class="return-now" hidden><span data-icon="pin"></span> Now</button>
   <div id="aheadBanner" class="ahead-banner" hidden></div>
   <div id="toast" class="toast" hidden></div>
 
-  <!-- bottom "up next" peek -->
-  <button id="upNext" class="up-next" hidden><span class="un-label">Up next</span><span id="upNextName" class="un-name"></span><span class="ic" data-icon="chevron-down"></span></button>
+  <!-- bottom navigation: ◀ prev activity · up-next section pill · next activity ▶ -->
+  <nav id="navbar" class="navbar">
+    <button id="navPrev" class="nav-circle" aria-label="Previous activity"><span data-icon="chevron-up"></span></button>
+    <button id="upNext" class="up-next"><span class="un-label">Up next</span><span id="upNextName" class="un-name"></span></button>
+    <button id="navNext" class="nav-circle" aria-label="Next activity"><span data-icon="chevron-down"></span></button>
+  </nav>
 
   <!-- crossfade curtain for map jumps + intro -->
   <div id="curtain" class="curtain" aria-hidden="true"></div>
@@ -163,7 +168,7 @@
       }
     })();
   </script>
-  <script src="disney-data.js?v=10"></script>
-  <script src="disney.js?v=10"></script>
+  <script src="disney-data.js?v=11"></script>
+  <script src="disney.js?v=11"></script>
 </body>
 </html>

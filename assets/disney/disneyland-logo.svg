@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 270" fill="none">
+  <!-- PLACEHOLDER Disneyland wordmark — replace with the real logo art (convert text to
+       outlines on export). The overture shows this, then you scroll down to the castle. -->
+  <!-- sweeping swoosh -->
+  <path d="M40 158 Q280 70 520 158" fill="none" stroke="#ffcf6b" stroke-width="6" stroke-linecap="round" opacity=".9"/>
+  <!-- little spire flourish above the swoosh -->
+  <g fill="#ffe7b0">
+    <path d="M280 78 l16 -34 16 34 z"/>
+    <circle cx="296" cy="40" r="4"/>
+  </g>
+  <!-- wordmark (uses the page's park font) -->
+  <text x="280" y="190" text-anchor="middle" font-family="'Lobster Two', cursive" font-weight="700"
+    font-size="96" fill="#ffffff">Disneyland</text>
+  <text x="280" y="234" text-anchor="middle" font-family="'Nunito', sans-serif" font-weight="800"
+    font-size="18" letter-spacing="6" fill="#ffcf6b">PLACEHOLDER LOGO</text>
+</svg>
