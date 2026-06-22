@@ -52,6 +52,39 @@ window.DISNEY_DAY = {
       "wind-down": "avengers", "woc-position": "world-of-color", "world-of-color": "world-of-color",
       "hop-back": "castle", "night-session": "fireworks",
     },
+
+    /* v3 — the party. Four guests; names editable in-app (synced under
+       disney2026/party). Each attraction tracks each guest independently. */
+    party: ["Nolan", "Friend 2", "Friend 3", "Friend 4"],
+
+    /* v3 — per-land personality.
+       motion: the animation language of the scene
+               zoom | drift | orbit | sway | night
+       font:   header typeface  cinzel | lobster | righteous */
+    motion: {
+      "rope-drop": "drift", "morning-sweep": "orbit", "new-orleans": "sway",
+      "woc-vq": "sway", "lunch": "sway", "galaxys-edge": "orbit",
+      "hop-dca": "drift", "dca-sweep": "drift", "dinner": "drift",
+      "wind-down": "orbit", "woc-position": "sway", "world-of-color": "sway",
+      "hop-back": "drift", "night-session": "night",
+    },
+    font: {
+      "rope-drop": "lobster", "morning-sweep": "righteous", "new-orleans": "lobster",
+      "woc-vq": "lobster", "lunch": "lobster", "galaxys-edge": "righteous",
+      "hop-dca": "lobster", "dca-sweep": "lobster", "dinner": "lobster",
+      "wind-down": "righteous", "woc-position": "lobster", "world-of-color": "lobster",
+      "hop-back": "lobster", "night-session": "cinzel",
+    },
+
+    /* v3 — context-sensitive stamp wording + ink color by quest type. */
+    stamps: {
+      ride:     { label: "Ridden",    ink: "#2f8f63" },
+      food:     { label: "Tasted",    ink: "#b9542f" },
+      show:     { label: "Attended",  ink: "#7a4fb0" },
+      move:     { label: "Done",      ink: "#3a6ea5" },
+      action:   { label: "Booked",    ink: "#c79a2e" },
+      deadline: { label: "Joined",    ink: "#c0344f" },
+    },
   },
 
   /* Master palette. Each block's background flows from its zone base into the

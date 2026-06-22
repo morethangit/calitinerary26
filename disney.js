@@ -1,552 +1,656 @@
 /* ============================================================================
-   DISNEYLAND · A DAY OF MAGIC — v2 logic
+   A PARK DAY · DISNEYLAND — v3 engine
    ----------------------------------------------------------------------------
-   A storybook journey. Living sky + parallax props + a curving trail of
-   passport stamps. The clock gently guides ("you are here" + ahead-of-schedule
-   praise only); completing stamps is the real progress. Quest state syncs via
-   Firebase (or localStorage). A testing clock lets you rehearse the whole day.
+   Full-screen, scene-based, scroll-driven. Each land is a pinned stage; scroll
+   animates the scene and reveals signage that dissolves as you move on. Four
+   guests tracked independently with ink stamps. Living time-of-day sky. PWA +
+   client-scheduled time-sensitive alerts + subtle synthesized park sounds.
    ========================================================================== */
 
 (function () {
   "use strict";
-
   var DAY = window.DISNEY_DAY;
   if (!DAY) return;
-  var BLOCKS = DAY.blocks;
-  var DAY_START = DAY.meta.dayStartMin, DAY_END = DAY.meta.dayEndMin, SPAN = DAY_END - DAY_START;
+  var BLOCKS = DAY.blocks, M = DAY.meta;
+  var DAY_START = M.dayStartMin, DAY_END = M.dayEndMin;
+  var GKEYS = ["g1", "g2", "g3", "g4"];
 
-  var TYPE_ICON = { ride: "🎢", food: "🍽️", show: "🎆", move: "🚶", action: "⚡", deadline: "⏰" };
-
-  // time-of-day sky palette + "darkness" (0 day .. 1 night) per phase
-  var SKY = {
-    dawn:    { a: "#f9c8a0", b: "#b58fd6", dark: 0.18 },
-    morning: { a: "#bfe3ff", b: "#8ec5ff", dark: 0.0 },
-    midday:  { a: "#cdecff", b: "#7fb7ff", dark: 0.0 },
-    golden:  { a: "#ffd29b", b: "#ff7e5a", dark: 0.12 },
-    dusk:    { a: "#6f6db0", b: "#2b2350", dark: 0.6 },
-    night:   { a: "#0b1330", b: "#05060f", dark: 1.0 },
+  /* ----------------------------------------------------------- inline icons */
+  var ICONS = {
+    map: '<path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2z"/><path d="M9 3v16M15 5v16"/>',
+    gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>',
+    "chevron-up": '<path d="M6 15l6-6 6 6"/>',
+    "chevron-down": '<path d="M6 9l6 6 6-6"/>',
+    pin: '<path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.4"/>',
+    close: '<path d="M6 6l12 12M18 6L6 18"/>',
+    bell: '<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+    sound: '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a3 3 0 0 1 0 6"/>',
+    sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+    motion: '<path d="M4 12h7M4 7h12M4 17h9"/><path d="M17 9l3 3-3 3"/>',
+    party: '<circle cx="8" cy="8" r="3"/><circle cx="16" cy="9" r="2.4"/><path d="M3 20c0-3 2.5-5 5-5s5 2 5 5M13 20c0-2.3 1.6-4 3.5-4s3.5 1.7 3.5 4"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+    book: '<path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M5 18a2 2 0 0 1 2-2h11"/>',
+    star: '<path d="M12 3l2.6 6.3L21 10l-5 4 1.5 7L12 17.5 6.5 21 8 14 3 10l6.4-.7z"/>',
+    ride: '<path d="M3 17h18M5 17V8l4 2 3-4 3 3 4-1v9"/><circle cx="7" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/>',
+    food: '<path d="M6 3v8a2 2 0 0 0 4 0V3M8 11v10M16 3c-1.5 0-2.5 2-2.5 5s1 4 2.5 4 2.5-1 2.5-4V3M16 12v9"/>',
+    show: '<path d="M12 3l1.6 4.5L18 9l-4.4 1.5L12 15l-1.6-4.5L6 9l4.4-1.5z"/><path d="M5 19l1.5-2M19 19l-1.5-2M12 18v3"/>',
+    move: '<path d="M9 5l-2 6 3 2-1 6M15 4l1 5-3 3 2 7"/><circle cx="10" cy="3.2" r="1.3"/>',
+    lightning: '<path d="M13 2L5 13h6l-2 9 9-12h-6z"/>',
+    vq: '<path d="M7 3h10M7 21h10M8 3c0 4 8 5 8 9s-8 5-8 9M16 3c0 4-8 5-8 9"/>',
   };
+  function svg(name, cls) {
+    return '<span class="ic ' + (cls || "") + '"><svg viewBox="0 0 24 24">' + (ICONS[name] || "") + "</svg></span>";
+  }
+  function hydrateIcons(root) {
+    (root || document).querySelectorAll("[data-icon]").forEach(function (el) {
+      el.innerHTML = '<span class="ic"><svg viewBox="0 0 24 24">' + (ICONS[el.dataset.icon] || "") + "</svg></span>";
+    });
+  }
+  var TYPE_ICON = { ride: "ride", food: "food", show: "show", move: "move", action: "lightning", deadline: "vq" };
 
-  /* ---------- elements ---------- */
+  /* ----------------------------------------------------------- helpers */
   var $ = function (id) { return document.getElementById(id); };
-  var stopsEl = $("stops"), propsEl = $("props"), trailSvg = $("trail");
-  var trailBase = $("trailBase"), trailGlow = $("trailGlow"), marker = $("marker");
-  var fxCanvas = $("fx"), stampCountEl = $("stampCount");
-  var rootStyle = document.documentElement.style;
-
-  /* ---------- helpers ---------- */
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function lerp(a, b, t) { return a + (b - a) * t; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-  function hex(h) { h = h.replace("#", ""); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
-  function mix(h1, h2, t) { var a = hex(h1), b = hex(h2); return "rgb(" + Math.round(lerp(a[0], b[0], t)) + "," + Math.round(lerp(a[1], b[1], t)) + "," + Math.round(lerp(a[2], b[2], t)) + ")"; }
-  function fmtClock(min) {
-    min = ((Math.round(min) % 1440) + 1440) % 1440;
-    var h = Math.floor(min / 60), m = min % 60, ap = h >= 12 ? "PM" : "AM", h12 = h % 12 || 12;
-    return h12 + ":" + String(m).padStart(2, "0") + " " + ap;
-  }
+  function hx(h) { h = h.replace("#", ""); return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)]; }
+  function mix(h1, h2, t) { var a = hx(h1), b = hx(h2); return "rgb(" + Math.round(lerp(a[0], b[0], t)) + "," + Math.round(lerp(a[1], b[1], t)) + "," + Math.round(lerp(a[2], b[2], t)) + ")"; }
+  function mixA(h, a) { var c = hx(h); return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")"; }
+  function fmt(min) { min = ((Math.round(min) % 1440) + 1440) % 1440; var h = Math.floor(min / 60), m = min % 60, ap = h >= 12 ? "PM" : "AM", h12 = h % 12 || 12; return h12 + ":" + String(m).padStart(2, "0") + " " + ap; }
   function realMin() { var d = new Date(); return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; }
+  function vh() { return window.innerHeight; }
 
-  /* ---------- time source (real clock OR testing clock) ---------- */
+  var SKY = {
+    dawn: { a: "#f9c8a0", b: "#b58fd6", d: 0.18 }, morning: { a: "#bfe3ff", b: "#8ec5ff", d: 0 },
+    midday: { a: "#cdecff", b: "#7fb7ff", d: 0 }, golden: { a: "#ffd29b", b: "#ff7e5a", d: 0.12 },
+    dusk: { a: "#6f6db0", b: "#2b2350", d: 0.6 }, night: { a: "#0b1330", b: "#05060f", d: 1 },
+  };
+
+  /* ----------------------------------------------------------- time source */
   var test = { active: new URLSearchParams(location.search).has("test"), min: DAY_START, playing: false, speed: 60, lastTick: 0 };
   function now() { return test.active ? test.min : realMin(); }
 
-  /* ---------- quest/stamp state + storage + sync ---------- */
+  /* ----------------------------------------------------------- state + sync */
   var ROOM_REAL = "disney2026", ROOM_TEST = "disney2026_test";
   var room = (test.active && localStorage.getItem("disney_testroom") !== "0") ? ROOM_TEST : ROOM_REAL;
-  var state = {}, myName = localStorage.getItem("disney_name") || "", db = null;
-  var lsKey = function () { return "disney_quests_" + room; };
-  function loadLocal() { try { state = JSON.parse(localStorage.getItem(lsKey()) || "{}"); } catch (e) { state = {}; } }
+  var state = {}, party = (M.party || ["Guest 1", "Guest 2", "Guest 3", "Guest 4"]).slice(0, 4);
+  var mine = localStorage.getItem("disney_me") || "g1";
+  var db = null, dbParty = null;
+  var lsKey = function () { return "disney_state_" + room; };
+  var lsParty = "disney_party";
+  function normParty() { for (var i = 0; i < 4; i++) { if (!party[i]) party[i] = "Guest " + (i + 1); } party = party.slice(0, 4); }
+  normParty();
+  function loadLocal() { try { state = JSON.parse(localStorage.getItem(lsKey()) || "{}"); } catch (e) { state = {}; } try { var p = JSON.parse(localStorage.getItem(lsParty) || "null"); if (p && p.length) party = p; } catch (e) {} normParty(); }
   function saveLocal() { try { localStorage.setItem(lsKey(), JSON.stringify(state)); } catch (e) {} }
-  function isDone(id) { return !!(state[id] && state[id].done); }
+  function savePartyLocal() { try { localStorage.setItem(lsParty, JSON.stringify(party)); } catch (e) {} }
+  function isDone(id, g) { return !!(state[id] && state[id][g] && state[id][g].done); }
+  function countDone(id) { var n = 0; GKEYS.forEach(function (g) { if (isDone(id, g)) n++; }); return n; }
 
   function initFirebase() {
     var cfg = window.FIREBASE_CONFIG;
     if (!cfg || cfg.apiKey === "REPLACE_ME" || typeof firebase === "undefined") return false;
-    try {
-      firebase.initializeApp(cfg);
-      bindRoom();
-      return true;
-    } catch (e) { console.warn("Firebase off, local-only:", e); db = null; return false; }
+    try { firebase.initializeApp(cfg); bindRoom(); bindParty(); return true; }
+    catch (e) { console.warn("Firebase off:", e); db = null; return false; }
   }
   function bindRoom() {
-    if (typeof firebase === "undefined") { loadLocal(); repaintAll(); return; }
+    if (typeof firebase === "undefined") return;
     if (db) { try { db.off(); } catch (e) {} }
     db = firebase.database().ref(room + "/quests");
-    db.on("value", function (snap) { state = snap.val() || {}; saveLocal(); repaintAll(); });
+    db.on("value", function (s) { state = s.val() || {}; saveLocal(); repaintAll(); });
   }
-  function setQuest(id, done) {
-    var rec = done ? { done: true, by: myName || "someone", at: Date.now() } : { done: false };
-    state[id] = rec; saveLocal();
-    if (db) { try { db.child(id).set(rec); } catch (e) {} }
-    repaintStop(id); updateProgress(); refreshAhead();
+  function bindParty() {
+    if (typeof firebase === "undefined") return;
+    dbParty = firebase.database().ref(room + "/party");
+    dbParty.on("value", function (s) { var v = s.val(); if (v && v.length) { party = v.slice(0, 4); normParty(); savePartyLocal(); repaintParty(); buildParty(); buildDirectory(); } });
   }
+  function setGuest(id, g, done) {
+    if (!state[id]) state[id] = {};
+    state[id][g] = done ? { done: true, at: Date.now(), rot: Math.round(Math.random() * 60 - 30) } : { done: false };
+    saveLocal();
+    if (db) { try { db.child(id + "/" + g).set(state[id][g]); } catch (e) {} }
+    repaintSign(id); refreshSheet(id); updateNow(); refreshAhead();
+  }
+  function pushParty() { savePartyLocal(); if (dbParty) { try { dbParty.set(party); } catch (e) {} } repaintParty(); }
 
-  /* ---------- build DOM: overture + blocks + stops ---------- */
-  var stopEls = {};       // questId -> .stop element
-  var blockEls = [];      // { el, block }
+  /* ----------------------------------------------------------- scene index */
+  // scenes = overture + blocks + passport. blocks carry the data.
+  var scenes = [];   // { el, kind, block?, phase, name, font, motion, beats:[{el, kind, center, anchor, id?}] }
+  var film = $("film");
 
   function build() {
-    stopsEl.innerHTML = "";
+    film.innerHTML = "";
+    scenes = [];
+    buildOverture();
+    BLOCKS.forEach(buildScene);
+    buildPassport();
+  }
 
-    // OVERTURE — Main Street walk
-    var ov = document.createElement("section");
-    ov.className = "overture";
-    ov.id = "overture";
-    ov.innerHTML =
-      '<div class="ov-kicker">Main Street, U.S.A.</div>' +
-      '<div class="ov-title">A Day of Magic</div>' +
-      '<p class="ov-quote">"Here you leave today and enter the world of yesterday, tomorrow and fantasy."</p>' +
-      '<div class="ov-scroll-cue">scroll into the park ↓</div>';
-    stopsEl.appendChild(ov);
+  function sceneShell(opts) {
+    var sec = document.createElement("section");
+    sec.className = "scene" + (opts.future ? " future" : "");
+    sec.dataset.id = opts.id;
+    var beatsCount = opts.beats || 3;
+    var vhH = clamp(110 + beatsCount * 62, 200, 620);
+    sec.style.height = vhH + "vh";
+    var stage = document.createElement("div"); stage.className = "stage";
+    var back = document.createElement("div"); back.className = "scene-backdrop"; back.dataset.motion = opts.motion || "drift";
+    var ground = document.createElement("div"); ground.className = "scene-ground";
+    stage.appendChild(back); stage.appendChild(ground);
+    sec.appendChild(stage);
+    film.appendChild(sec);
+    return { sec: sec, stage: stage, back: back };
+  }
 
-    BLOCKS.forEach(function (b) {
-      var zone = DAY.zones[b.zone];
-      var sec = document.createElement("section");
-      sec.className = "block"; sec.id = "block-" + b.id;
-      sec.style.setProperty("--zone", zone.accent);
+  function buildOverture() {
+    var sh = sceneShell({ id: "overture", motion: "zoom", beats: 3 });
+    // layered Main Street composition
+    var comp = sh.back;
+    comp.innerHTML =
+      '<div class="ov-layer" data-prop="castle" style="position:absolute;left:50%;bottom:34%;width:34%;transform:translateX(-50%);opacity:.7"></div>' +
+      '<div class="ov-layer" data-prop="train-station" style="position:absolute;left:50%;bottom:20%;width:62%;transform:translateX(-50%)"></div>' +
+      '<div class="ov-layer" data-prop="mainstreet-left" style="position:absolute;left:0;bottom:0;width:42%"></div>' +
+      '<div class="ov-layer" data-prop="mainstreet-right" style="position:absolute;right:0;bottom:0;width:42%"></div>';
+    var stage = sh.stage;
+    var title = document.createElement("div");
+    title.className = "scene-title";
+    title.innerHTML =
+      '<span class="scene-eyebrow">Main Street, U.S.A.</span>' +
+      '<h1 class="scene-name f-regal">A Park Day</h1>' +
+      '<p class="scene-sub">"Here you leave today and enter the world of yesterday, tomorrow and fantasy."</p>';
+    stage.appendChild(title);
+    var cue = document.createElement("div");
+    cue.className = "beat anchor-bl"; cue.dataset.center = "0.55";
+    cue.innerHTML = '<p class="whisper">Scroll to walk into the park. Tap any sign to open it; tap away to close.</p>';
+    stage.appendChild(cue);
+    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "overture", phase: "dawn", name: "Main Street", motion: "zoom", beats: [{ el: title, center: 0.12, kind: "title" }, { el: cue, center: 0.55, kind: "whisper" }] });
+  }
 
-      var head = document.createElement("div");
-      head.className = "block-head";
-      head.innerHTML =
-        '<span class="block-eyebrow">' + esc(b.time) + " · " + esc(zone.label) + "</span>" +
-        '<h2 class="block-title">' + esc(b.title) + "</h2>" +
-        (b.subtitle ? '<p class="block-sub">' + esc(b.subtitle) + "</p>" : "");
-      sec.appendChild(head);
+  function buildScene(block) {
+    var zone = DAY.zones[block.zone];
+    var fontKey = M.font[block.id] || "lobster";
+    var motion = M.motion[block.id] || "drift";
+    var future = fontKey === "righteous";
+    var stops = (block.quests || []);
+    var notes = (block.notes || []);
+    var beatN = 1 + stops.length + notes.length;
+    var sh = sceneShell({ id: block.id, motion: motion, beats: beatN, future: future });
+    sh.sec.style.setProperty("--zone", zone.accent);
+    sh.back.dataset.prop = M.landmarks[block.id] || "";
+    var stage = sh.stage;
 
-      // strategy notes
-      if (b.notes) b.notes.forEach(function (n) {
-        var note = document.createElement("div");
-        note.className = "block-note";
-        note.innerHTML = '<span class="bn-ic">↳</span><span>' + esc(n) + "</span>";
-        sec.appendChild(note);
-      });
+    // title beat
+    var title = document.createElement("div");
+    title.className = "scene-title";
+    var nameCls = future ? "f-future" : "";
+    title.innerHTML =
+      '<span class="scene-eyebrow">' + esc(block.time) + " &middot; " + esc(zone.label) + "</span>" +
+      '<h1 class="scene-name ' + nameCls + '">' + esc(block.title) + "</h1>" +
+      (block.subtitle ? '<p class="scene-sub">' + esc(block.subtitle) + "</p>" : "");
+    stage.appendChild(title);
+    var beats = [{ el: title, center: 0.12, kind: "title" }];
 
-      // stops
-      (b.quests || []).forEach(function (q) {
-        var stop = document.createElement("div");
-        stop.className = "stop" + (q.star ? " is-star" : "") + (q.optional ? " optional" : "") + (q.type === "deadline" ? " deadline" : "");
-        stop.dataset.id = q.id;
-        var stampWord = q.type === "food" ? "Tasted" : q.type === "show" ? "Seen" : q.type === "move" ? "Done" : "Ridden";
-        stop.innerHTML =
-          '<div class="medallion"><span class="med-ic">' + (TYPE_ICON[q.type] || "•") + "</span>" +
-            '<span class="stamp">' + stampWord + "</span></div>" +
-          '<div class="scene-card">' +
-            '<div class="stop-label">' + esc(q.label) + (q.star ? ' <span class="stop-star">★</span>' : "") + "</div>" +
-            (q.note ? '<div class="stop-note">' + esc(q.note) + "</div>" : "") +
-            (b.deadline && q.type === "deadline" ? '<span class="deadline-clock" data-deadline="' + b.deadline.atMin + '">' + esc(b.deadline.label) + "</span>" : "") +
-            '<div class="stop-by"></div>' +
-          "</div>";
-        stop.querySelector(".medallion").addEventListener("click", function () { onStopTap(q.id, stop); });
-        sec.appendChild(stop);
-        stopEls[q.id] = stop;
-      });
-
-      // LL chain reminder on ride blocks
-      if ((b.quests || []).some(function (q) { return q.type === "ride"; }) && !b.alert) {
-        var ll = document.createElement("div");
-        ll.className = "ll-reminder";
-        ll.innerHTML = '<span class="ll-ic">↻</span> Scanned in? Book your next Lightning Lane now.';
-        sec.appendChild(ll);
+    // interleave notes + stops as beats with varied anchors
+    var anchors = ["anchor-mr", "anchor-bl", "anchor-ml", "anchor-br", "anchor-cl", "anchor-tr"];
+    var seq = [];
+    notes.forEach(function (n) { seq.push({ kind: "note", note: n }); });
+    stops.forEach(function (q) { seq.push({ kind: "stop", q: q }); });
+    var N = seq.length;
+    seq.forEach(function (item, i) {
+      var center = N ? clamp(0.28 + (i + 0.5) / N * 0.62, 0, 1) : 0.5;
+      var beat = document.createElement("div");
+      beat.className = "beat " + anchors[i % anchors.length];
+      beat.dataset.center = center;
+      if (item.kind === "note") {
+        beat.innerHTML = '<p class="whisper">' + esc(item.note) + "</p>";
+      } else {
+        beat.appendChild(buildSign(item.q, block, i % 2 === 1));
       }
-
-      stopsEl.appendChild(sec);
-      blockEls.push({ el: sec, block: b });
+      stage.appendChild(beat);
+      beats.push({ el: beat, center: center, kind: item.kind, id: item.kind === "stop" ? item.q.id : null });
     });
 
-    // endcap
-    var ec = document.createElement("footer");
-    ec.id = "endcap";
-    ec.innerHTML = '<div class="ec-title">A kiss goodnight</div>' +
-      "<p>That's the whole day. Go make some magic. ✨</p>" +
-      '<button class="ec-reset" id="resetFoot">Reset our stamps</button>';
-    stopsEl.appendChild(ec);
-    $("resetFoot").addEventListener("click", resetAll);
-
-    // deadline flash overlay
-    var flash = document.createElement("div"); flash.id = "deadlineFlash"; document.body.appendChild(flash);
+    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "block", block: block, phase: M.sky[block.id] || "midday", name: block.title, fontKey: fontKey, motion: motion, beats: beats });
   }
 
-  /* ---------- props: fetch + inline the landmark SVGs ---------- */
-  var propItems = [];   // { el, anchorY, depth, side }
-  function buildProps() {
-    propsEl.innerHTML = ""; propItems = [];
-    // Main Street pair for the overture
-    addProp("mainstreet-left", overtureAnchor(), 0.45, "left");
-    addProp("mainstreet-right", overtureAnchor(), 0.45, "right");
-    addProp("train-station", overtureAnchor() + vh() * 0.2, 0.6, "center");
-    // one landmark per block
-    blockEls.forEach(function (b) {
-      var name = DAY.meta.landmarks[b.block.id];
-      if (name) addProp(name, blockCenter(b.el), 0.55, "center");
+  var signEls = {};
+  function buildSign(q, block, tiltR) {
+    var btn = document.createElement("button");
+    btn.className = "stop-sign" + (tiltR ? " tilt-r" : "") + (q.type === "deadline" ? " deadline" : "");
+    btn.dataset.id = q.id;
+    btn.innerHTML =
+      '<div class="sign-plate">' +
+        '<span class="sign-cat">' + svg(TYPE_ICON[q.type] || "star") + "</span>" +
+        '<div class="sign-name">' + esc(q.label) + "</div>" +
+        '<div class="sign-meta">' + (q.star ? '<span class="sign-star">' + svg("star", "solid") + "</span>" : "") +
+          '<span class="sign-pips">' + GKEYS.map(function (g) { return '<span class="pip ' + g + '"></span>'; }).join("") + "</span>" +
+        "</div>" +
+        '<div class="sign-hint">tap to open</div>' +
+      "</div>";
+    btn.addEventListener("click", function () { openSheet(q.id); });
+    signEls[q.id] = btn;
+    return btn;
+  }
+
+  function repaintSign(id) {
+    var el = signEls[id]; if (!el) return;
+    var q = questById(id);
+    GKEYS.forEach(function (g, i) {
+      var pip = el.querySelectorAll(".pip")[i];
+      if (pip) pip.classList.toggle("on", isDone(id, g));
     });
-    // exact positions are set every frame by onScroll()
+    var n = countDone(id);
+    el.classList.toggle("complete", n === 4);
+    var hint = el.querySelector(".sign-hint");
+    if (hint) hint.textContent = n ? n + " of 4 done" : "tap to open";
   }
-  function overtureAnchor() { var ov = $("overture"); return ov ? ov.offsetTop + ov.offsetHeight * 0.62 : 0; }
-  function blockCenter(el) { return el.offsetTop + el.offsetHeight * 0.5; }
-  function addProp(name, anchorY, depth, side) {
-    var div = document.createElement("div");
-    div.className = "prop prop-" + side;
-    if (side === "left") { div.style.left = "0"; div.style.right = "auto"; div.style.transform = "none"; div.style.width = "min(46vw,340px)"; }
-    else if (side === "right") { div.style.left = "auto"; div.style.right = "0"; div.style.transform = "none"; div.style.width = "min(46vw,340px)"; }
-    propsEl.appendChild(div);
-    var item = { el: div, anchorY: anchorY, depth: depth, side: side };
-    propItems.push(item);
-    fetch("assets/disney/" + name + ".svg").then(function (r) { return r.ok ? r.text() : ""; })
-      .then(function (txt) { if (txt) div.innerHTML = txt; }).catch(function () {});
+  function repaintAll() { Object.keys(signEls).forEach(repaintSign); if (curSheetId) refreshSheet(curSheetId); updateNow(); refreshAhead(); renderPassport(); }
+  function repaintParty() { renderPassport(); if (curSheetId) refreshSheet(curSheetId); }
+
+  function questById(id) { for (var i = 0; i < BLOCKS.length; i++) { var qs = BLOCKS[i].quests || []; for (var j = 0; j < qs.length; j++) if (qs[j].id === id) return qs[j]; } return null; }
+  function blockOf(id) { for (var i = 0; i < BLOCKS.length; i++) { var qs = BLOCKS[i].quests || []; for (var j = 0; j < qs.length; j++) if (qs[j].id === id) return BLOCKS[i]; } return null; }
+
+  /* ----------------------------------------------------------- attraction sheet */
+  var curSheetId = null, popGuest = null;
+  function openSheet(id) {
+    curSheetId = id;
+    refreshSheet(id);
+    $("sheet").hidden = false;
   }
-
-  /* ---------- layout: trail geometry + medallion placement ---------- */
-  var H = 0;            // document height
-  function vw() { return window.innerWidth; }
-  function vh() { return window.innerHeight; }
-  function swayAmp() { return clamp(vw() * 0.16, 26, 70); }
-  function swayX(y) { return vw() / 2 + swayAmp() * Math.sin(y / 460); }
-
-  function layout() {
-    H = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
-    // trail svg sizing
-    trailSvg.setAttribute("width", vw());
-    trailSvg.setAttribute("height", H);
-    trailSvg.setAttribute("viewBox", "0 0 " + vw() + " " + H);
-    // build the path
-    var startY = (($("overture") || {}).offsetHeight || 0) * 0.5;
-    var d = "M " + swayX(startY).toFixed(1) + " " + startY.toFixed(1);
-    for (var y = startY + 18; y <= H; y += 18) d += " L " + swayX(y).toFixed(1) + " " + y.toFixed(1);
-    trailBase.setAttribute("d", d);
-    trailGlow.setAttribute("d", d);
-    glowLen = trailGlow.getTotalLength();
-    trailGlow.style.strokeDasharray = glowLen;
-
-    // place medallions onto the sway path
-    Object.keys(stopEls).forEach(function (id) {
-      var med = stopEls[id].querySelector(".medallion");
-      var r = med.getBoundingClientRect();
-      var yc = r.top + window.scrollY + r.height / 2;
-      med.style.transform = "translateX(" + (swayX(yc) - vw() / 2).toFixed(1) + "px)";
+  function closeSheet() { $("sheet").hidden = true; curSheetId = null; }
+  function refreshSheet(id) {
+    if (curSheetId !== id && $("sheet").hidden) return;
+    var q = questById(id), block = blockOf(id);
+    if (!q) return;
+    var zone = DAY.zones[block.zone];
+    var future = (M.font[block.id] === "righteous");
+    var st = DAY.meta.stamps[q.type] || { label: "Done", ink: "#2f8f63" };
+    var html = "";
+    html += '<div class="sheet-eyebrow">' + esc(block.time) + " &middot; " + esc(zone.label) + "</div>";
+    html += '<div class="sheet-title' + (future ? " scene-future-title" : "") + '">' + esc(q.label) + (q.star ? " " + svg("star", "solid") : "") + "</div>";
+    if (q.note) html += '<p class="sheet-note">' + esc(q.note) + "</p>";
+    if (block.deadline && q.type === "deadline") html += '<div class="sheet-deadline">' + svg("vq") + " " + esc(block.deadline.label) + " &middot; opens at " + fmt(block.deadline.atMin) + "</div>";
+    html += '<div class="sheet-section-label">Who did this?</div>';
+    GKEYS.forEach(function (g, i) {
+      var done = isDone(id, g), rec = state[id] && state[id][g], rot = rec && rec.rot != null ? rec.rot : -8;
+      var label = party[i] || ("Guest " + (i + 1));
+      html += '<div class="guest-row" data-g="' + g + '">' +
+        '<span class="guest-badge ' + g + '">' + esc((label[0] || "?").toUpperCase()) + "</span>" +
+        '<span class="guest-name">' + esc(label) + (g === mine ? '<span class="you">YOU</span>' : "") + "</span>" +
+        '<span class="guest-toggle">' + (done
+          ? '<span class="stamp' + (popGuest === id + ":" + g ? " pop" : "") + '" style="color:' + st.ink + ';--rot:' + rot + 'deg">' + esc(st.label) + "</span>"
+          : '<span class="togbox"></span>') + "</span>" +
+        "</div>";
     });
-
-    // recompute prop anchors now that heights are known
-    propItems.length = 0;
-    buildPropsAnchorsOnly();
-    onScroll(); tickClock();
-  }
-  function buildPropsAnchorsOnly() {
-    // re-derive anchors for existing prop elements (DOM already built)
-    var divs = propsEl.querySelectorAll(".prop");
-    // first three are overture pair + station; rest map to blocks in order
-    var idx = 0, ov = overtureAnchor();
-    propItems = [];
-    if (divs[idx]) propItems.push({ el: divs[idx++], anchorY: ov, depth: 0.45, side: "left" });
-    if (divs[idx]) propItems.push({ el: divs[idx++], anchorY: ov, depth: 0.45, side: "right" });
-    if (divs[idx]) propItems.push({ el: divs[idx++], anchorY: ov + vh() * 0.2, depth: 0.6, side: "center" });
-    blockEls.forEach(function (b) {
-      if (!DAY.meta.landmarks[b.block.id]) return;
-      if (divs[idx]) propItems.push({ el: divs[idx++], anchorY: blockCenter(b.el), depth: 0.55, side: "center" });
+    var c = $("sheetContent");
+    c.innerHTML = html;
+    popGuest = null;
+    // theme the sheet to the land
+    document.documentElement.style.setProperty("--zone", zone.accent);
+    c.querySelectorAll(".guest-row").forEach(function (row) {
+      row.addEventListener("click", function () {
+        var g = row.dataset.g, willDo = !isDone(id, g);
+        if (willDo) { sound("stamp"); sparkleAt(row); popGuest = id + ":" + g; }   // effects on live node, flag the pop
+        setGuest(id, g, willDo);                          // then re-render the sheet (stamp pops in)
+      });
     });
   }
 
-  /* ---------- time → document Y ---------- */
-  var anchors = [];     // [{min, y}]
-  function buildAnchors() {
-    anchors = [];
-    blockEls.forEach(function (b) {
-      var med = b.el.querySelector(".medallion");
-      var y = med ? (med.getBoundingClientRect().top + window.scrollY) : (b.el.offsetTop + 40);
-      anchors.push({ min: b.block.startMin, y: y });
-    });
-    var ec = $("endcap");
-    anchors.push({ min: DAY_END, y: ec ? ec.offsetTop : H });
-  }
-  function yForMin(t) {
-    if (!anchors.length) return 0;
-    if (t <= anchors[0].min) return anchors[0].y;
-    for (var i = 0; i < anchors.length - 1; i++) {
-      if (t >= anchors[i].min && t < anchors[i + 1].min) {
-        var f = (t - anchors[i].min) / (anchors[i + 1].min - anchors[i].min);
-        return lerp(anchors[i].y, anchors[i + 1].y, f);
-      }
-    }
-    return anchors[anchors.length - 1].y;
-  }
-
-  /* ---------- scroll → sky, parallax, marker fill, return-now ---------- */
-  var glowLen = 0, ticking = false;
+  /* ----------------------------------------------------------- scene engine */
+  var active = 0, ticking = false;
   function onScroll() {
-    if (ticking) return;
-    ticking = true;
+    if (ticking) return; ticking = true;
     requestAnimationFrame(function () {
       ticking = false;
-      var sy = window.scrollY, centerY = sy + vh() / 2;
-
-      // --- living sky by what you're looking at ---
-      var phase = "midday", nextPhase = "midday", f = 0, accent = "#c98a5e";
-      for (var i = 0; i < blockEls.length; i++) {
-        var top = blockEls[i].el.offsetTop;
-        var bot = (i + 1 < blockEls.length) ? blockEls[i + 1].el.offsetTop : H;
-        if (centerY >= top && centerY < bot) {
-          phase = DAY.meta.sky[blockEls[i].block.id] || "midday";
-          nextPhase = (i + 1 < blockEls.length) ? (DAY.meta.sky[blockEls[i + 1].block.id] || phase) : phase;
-          f = clamp((centerY - top) / (bot - top), 0, 1);
-          accent = DAY.zones[blockEls[i].block.zone].accent;
-          break;
+      var sy = window.scrollY, center = sy + vh() / 2, V = vh();
+      var act = 0, actP = 0;
+      for (var i = 0; i < scenes.length; i++) {
+        var sec = scenes[i].el, top = sec.offsetTop, h = sec.offsetHeight;
+        var p = clamp((sy - top) / Math.max(1, h - V), 0, 1);
+        scenes[i]._p = p;
+        if (center >= top && center < top + h) { act = i; actP = p; }
+        // reveal beats + motion only for near scenes (perf)
+        if (top - sy < V * 1.5 && top + h - sy > -V * 0.5) {
+          applyMotion(scenes[i], p);
+          revealBeats(scenes[i], p);
         }
       }
-      if (centerY < (blockEls[0] ? blockEls[0].el.offsetTop : 0)) { phase = "dawn"; nextPhase = "dawn"; f = 0; }
-      var s1 = SKY[phase], s2 = SKY[nextPhase];
-      rootStyle.setProperty("--sky-a", mix(s1.a, s2.a, f));
-      rootStyle.setProperty("--sky-b", mix(s1.b, s2.b, f));
-      var dark = lerp(s1.dark, s2.dark, f);
-      rootStyle.setProperty("--star-op", clamp((dark - 0.45) / 0.55, 0, 1).toFixed(2));
-      rootStyle.setProperty("--sun-op", clamp(1 - dark * 1.4, 0, 1).toFixed(2));
-      rootStyle.setProperty("--moon-op", clamp((dark - 0.4) / 0.6, 0, 1).toFixed(2));
-      rootStyle.setProperty("--zone", accent);
-      rootStyle.setProperty("--tint", mixA(accent, 0.18));
-
-      // celestial arc by overall day progress
-      var p = clamp(centerY / H, 0, 1);
-      rootStyle.setProperty("--sun-x", (10 + 78 * p).toFixed(1) + "%");
-      rootStyle.setProperty("--sun-y", (vh() * (0.66 - 0.46 * Math.sin(p * Math.PI)) / vh() * 100).toFixed(1) + "vh");
-      rootStyle.setProperty("--moon-x", (12 + 76 * p).toFixed(1) + "%");
-      rootStyle.setProperty("--moon-y", (vh() * (0.6 - 0.4 * Math.sin(p * Math.PI)) / vh() * 100).toFixed(1) + "vh");
-
-      // --- parallax props ---
-      for (var k = 0; k < propItems.length; k++) {
-        var it = propItems[k];
-        var off = (it.anchorY - centerY) * it.depth;
-        var op = clamp(1 - Math.abs(off) / (vh() * 0.95), 0, 1);
-        var baseX = it.side === "center" ? "-50%" : "0";
-        it.el.style.transform = "translate(" + baseX + "," + off.toFixed(1) + "px)";
-        it.el.style.opacity = (op * 0.96).toFixed(2);
-      }
-
-      // --- return-to-now visibility ---
-      var my = yForMin(now());
-      var onScreen = my > sy + 70 && my < sy + vh() - 70;
-      var rn = $("returnNow"); if (rn) rn.hidden = onScreen;
+      active = act;
+      // sky from active scene → next
+      var s1 = SKY[scenes[act].phase] || SKY.midday;
+      var nxt = scenes[Math.min(scenes.length - 1, act + 1)];
+      var s2 = SKY[nxt.phase] || s1;
+      var rs = document.documentElement.style;
+      rs.setProperty("--sky-a", mix(s1.a, s2.a, actP));
+      rs.setProperty("--sky-b", mix(s1.b, s2.b, actP));
+      var dark = lerp(s1.d, s2.d, actP);
+      rs.setProperty("--star-op", clamp((dark - 0.45) / 0.55, 0, 1).toFixed(2));
+      rs.setProperty("--sun-op", clamp(1 - dark * 1.4, 0, 1).toFixed(2));
+      rs.setProperty("--moon-op", clamp((dark - 0.4) / 0.6, 0, 1).toFixed(2));
+      var acc = scenes[act].block ? DAY.zones[scenes[act].block.zone].accent : "#c98a5e";
+      rs.setProperty("--zone", acc); rs.setProperty("--tint", mixA(acc, 0.16));
+      var p = clamp(center / Math.max(1, document.body.scrollHeight), 0, 1);
+      rs.setProperty("--sun-x", (10 + 78 * p).toFixed(1) + "%");
+      rs.setProperty("--sun-y", ((0.66 - 0.46 * Math.sin(p * Math.PI)) * 100).toFixed(1) + "vh");
+      rs.setProperty("--moon-x", (12 + 76 * p).toFixed(1) + "%");
+      rs.setProperty("--moon-y", ((0.6 - 0.4 * Math.sin(p * Math.PI)) * 100).toFixed(1) + "vh");
+      // now-plate land + return-now visibility
+      $("nowLand").textContent = scenes[act].name;
+      document.body.classList.toggle("at-end", act === scenes.length - 1);
+      updateReturnNow();
     });
   }
-  function mixA(h, a) { var c = hex(h); return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")"; }
 
-  /* ---------- clock tick: marker, now-block, deadlines, ahead ---------- */
-  var curBlock = -1, deadlinesFired = {};
-  function tickClock() {
-    var min = now();
-    var my = yForMin(min);
-    marker.style.top = my + "px";
-    marker.style.left = swayX(my) + "px";
-    if (glowLen) { var frac = clamp(my / H, 0, 1); trailGlow.style.strokeDashoffset = (glowLen * (1 - frac)).toFixed(1); }
+  function applyMotion(scene, p) {
+    var b = scene.back, m = scene.motion, t = "translateX(-50%) ";
+    if (m === "zoom") t += "scale(" + (1 + p * 0.8).toFixed(3) + ") translateY(" + (-p * 6).toFixed(1) + "%)";
+    else if (m === "drift") t += "translateX(" + (-8 + p * 16).toFixed(1) + "%) scale(1.08)";
+    else if (m === "orbit") t = "translateX(-50%) rotate(" + (p * 6 - 3).toFixed(2) + "deg) scale(" + (1.04 + p * 0.06).toFixed(3) + ")";
+    else if (m === "sway") t += "translateX(" + (Math.sin(p * Math.PI * 2) * 4).toFixed(1) + "%) scale(1.05)";
+    else t += "scale(" + (1.04 + p * 0.04).toFixed(3) + ") translateY(" + (-p * 4).toFixed(1) + "%)";
+    b.style.transform = t;
+    b.style.opacity = clamp(1 - Math.abs(p - 0.5) * 0.5, 0.45, 1).toFixed(2);
+  }
 
-    // current block + now stops
-    var idx = 0;
-    for (var i = 0; i < BLOCKS.length; i++) { if (BLOCKS[i].startMin <= min) idx = i; else break; }
-    if (idx !== curBlock) {
-      curBlock = idx;
-      blockEls.forEach(function (b, i) {
-        var on = i === idx; b.el.classList.toggle("is-now", on);
-        b.el.querySelectorAll(".stop").forEach(function (s) { s.classList.toggle("is-now", on); });
-      });
-    }
-
-    // testing readout
-    if (test.active) {
-      var tc = $("tpClock"); if (tc) tc.textContent = fmtClock(min);
-      var sc = $("tpScrub"); if (sc && !scrubbing) sc.value = Math.round(min);
-    }
-
-    // deadlines
-    BLOCKS.forEach(function (b) {
-      if (!b.deadline) return;
-      var dueSoon = min >= b.deadline.atMin && min < b.deadline.atMin + 30;
-      var el = document.querySelector('#block-' + b.id + ' .deadline-clock');
-      if (el) el.textContent = b.deadline.label + (dueSoon ? " — GO!" : "");
-      if (min >= b.deadline.atMin && !deadlinesFired[b.id]) { deadlinesFired[b.id] = true; fireDeadline(b); }
-      if (min < b.deadline.atMin) deadlinesFired[b.id] = false;
+  function revealBeats(scene, p) {
+    scene.beats.forEach(function (beat) {
+      var c = beat.center, span = beat.kind === "title" ? 0.26 : 0.22;
+      var enter = c - span * 0.95, full1 = c - span * 0.35, full2 = c + span * 0.5, exit = c + span * 1.0;
+      var op;
+      if (p <= enter || p >= exit) op = 0;
+      else if (p < full1) op = (p - enter) / (full1 - enter);
+      else if (p > full2) op = 1 - (p - full2) / (exit - full2);
+      else op = 1;
+      op = clamp(op, 0, 1);
+      var ty = p < c ? (1 - op) * 42 : -(1 - op) * 30;
+      beat.el.style.opacity = op.toFixed(3);
+      beat.el.style.transform = "translateY(" + ty.toFixed(1) + "px)";
+      beat.el.style.pointerEvents = op > 0.45 ? "auto" : "none";
     });
-
-    refreshAhead();
   }
 
-  function fireDeadline(b) {
-    var flash = $("deadlineFlash");
-    if (flash && fxOn()) { flash.classList.remove("show"); void flash.offsetWidth; flash.classList.add("show"); }
-    if (navigator.vibrate) try { navigator.vibrate([60, 40, 60]); } catch (e) {}
-    if (fxOn()) for (var i = 0; i < 20; i++) (function (i) { setTimeout(function () { burst(innerWidth * (0.2 + Math.random() * 0.6), innerHeight * (0.25 + Math.random() * 0.3), DAY.alertAccent, 1); }, i * 30); })(i);
-    console.log("[deadline]", b.deadline.fire);
+  /* ----------------------------------------------------------- now / nav */
+  function nowSceneIndex() {
+    var min = now(), idx = 0;
+    for (var i = 0; i < scenes.length; i++) { if (scenes[i].block && scenes[i].block.startMin <= min) idx = i; }
+    return idx;
+  }
+  function updateNow() { $("nowTime").textContent = fmt(now()); }
+  function updateReturnNow() {
+    var rn = $("returnNow"); if (!rn) return;
+    rn.hidden = (active === nowSceneIndex());
+  }
+  function scrollToScene(i, smooth) {
+    var sec = scenes[i] && scenes[i].el; if (!sec) return;
+    window.scrollTo({ top: sec.offsetTop + sec.offsetHeight * 0.18, behavior: smooth === false ? "auto" : "smooth" });
   }
 
-  /* ---------- ahead-of-schedule (praise only) ---------- */
+  /* ----------------------------------------------------------- ahead-of-schedule */
   function refreshAhead() {
-    var min = now();
-    var expected = 0, total = 0, done = 0;
+    var min = now(), expected = 0, ahead = 0;
     BLOCKS.forEach(function (b) {
       (b.quests || []).forEach(function (q) {
-        total++;
-        if (isDone(q.id)) done++;
         if (b.startMin <= min) expected++;
+        if (countDone(q.id) > 0 && b.startMin > min) ahead++;
       });
     });
+    var done = 0; BLOCKS.forEach(function (b) { (b.quests || []).forEach(function (q) { if (countDone(q.id) > 0) done++; }); });
     var surplus = done - expected;
     var banner = $("aheadBanner");
-    if (surplus >= 2) {
-      banner.hidden = false;
-      banner.textContent = "✨ You're ahead of schedule — " + surplus + " stamps of bonus magic time!";
-      marker.classList.add("ahead");
-    } else {
-      banner.hidden = true;
-      marker.classList.remove("ahead");
-    }
+    if (surplus >= 2) { banner.hidden = false; banner.textContent = "You're ahead of schedule — " + surplus + " stops of bonus magic!"; }
+    else banner.hidden = true;
   }
 
-  /* ---------- stamp interactions ---------- */
-  var pendingTap = null;
-  function onStopTap(id, stop) {
-    if (!myName) { pendingTap = { id: id, stop: stop }; openNameGate(); return; }
-    var nowDone = !isDone(id);
-    setQuest(id, nowDone);
-    if (nowDone) {
-      var r = stop.querySelector(".medallion").getBoundingClientRect();
-      burst(r.left + r.width / 2, r.top + r.height / 2, getComputedStyle(stop).getPropertyValue("--zone") || "#ffcf6b", 1.2);
-      if (navigator.vibrate) try { navigator.vibrate(14); } catch (e) {}
-    }
+  /* ----------------------------------------------------------- passport / journal */
+  function buildPassport() {
+    var sec = document.createElement("section");
+    sec.className = "scene"; sec.dataset.id = "passport";
+    sec.style.height = "auto";
+    sec.innerHTML = '<div class="passport" id="passport"></div>';
+    film.appendChild(sec);
+    scenes.push({ el: sec, stage: sec, back: document.createElement("div"), kind: "passport", phase: "night", name: "Our Day", beats: [] });
+    renderPassport();
   }
-  function repaintStop(id) {
-    var el = stopEls[id]; if (!el) return;
-    var done = isDone(id);
-    el.classList.toggle("done", done);
-    var by = el.querySelector(".stop-by");
-    if (by) by.textContent = done && state[id].by ? "✓ stamped by " + state[id].by : "";
-  }
-  function repaintAll() { Object.keys(stopEls).forEach(repaintStop); updateProgress(); refreshAhead(); }
-  function updateProgress() {
-    var t = Object.keys(stopEls).length, d = Object.keys(stopEls).filter(isDone).length;
-    stampCountEl.textContent = d + " of " + t + " stamps";
-  }
-  function resetAll() {
-    if (!confirm("Reset every stamp for the whole party?")) return;
-    Object.keys(stopEls).forEach(function (id) { setQuest(id, false); });
+  function renderPassport() {
+    var el = $("passport"); if (!el) return;
+    var cats = [["ride", "Rides ridden", "ride"], ["action", "Lightning Lanes booked", "lightning"], ["show", "Shows attended", "show"], ["food", "Dining", "food"], ["deadline", "Queues joined", "vq"]];
+    var html = '<h2 class="passport-title">Our Day</h2><p class="passport-sub">A stamp book for ' + esc(M.title) + "</p>";
+    GKEYS.forEach(function (g, gi) {
+      var counts = {}, total = 0;
+      BLOCKS.forEach(function (b) { (b.quests || []).forEach(function (q) { if (isDone(q.id, g)) { counts[q.type] = (counts[q.type] || 0) + 1; total++; } }); });
+      html += '<div class="pass-card"><div class="pass-head"><span class="guest-badge ' + g + '">' + esc((party[gi][0] || "?").toUpperCase()) + '</span>' +
+        '<span class="pass-name">' + esc(party[gi]) + '</span><span class="pass-total">' + total + '</span></div><div class="pass-stats">';
+      cats.forEach(function (c) { html += '<div class="pass-stat">' + svg(c[2]) + '<span>' + c[1] + '</span><span class="n">' + (counts[c[0]] || 0) + "</span></div>"; });
+      html += "</div></div>";
+    });
+    html += '<p class="pass-foot">Tap a sign anywhere on the map to add a stamp. A kiss goodnight.</p>';
+    el.innerHTML = html;
   }
 
-  /* ---------- return to now ---------- */
-  $("returnNow").addEventListener("click", function () {
-    var my = yForMin(now());
-    window.scrollTo({ top: my - vh() * 0.42, behavior: prefersReduced() ? "auto" : "smooth" });
-  });
+  /* ----------------------------------------------------------- backdrops (fetch + inline) */
+  function loadBackdrops() {
+    document.querySelectorAll(".scene-backdrop[data-prop]").forEach(function (el) {
+      var name = el.dataset.prop; if (!name) return;
+      fetch("assets/disney/" + name + ".svg").then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) { if (t) el.innerHTML = t; }).catch(function () {});
+    });
+    document.querySelectorAll(".ov-layer[data-prop]").forEach(function (el) {
+      var name = el.dataset.prop;
+      fetch("assets/disney/" + name + ".svg").then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) { if (t) el.innerHTML = t; }).catch(function () {});
+    });
+  }
 
-  /* ---------- sparkle FX (canvas) ---------- */
-  var ctx, particles = [], rafId = null, trailAccum = 0;
+  /* ----------------------------------------------------------- sparkle fx */
+  var ctx, parts = [], raf = null, canvas = $("fx");
   function prefersReduced() { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; }
   function fxOn() { return !document.body.classList.contains("no-fx") && !document.body.classList.contains("reduce-fx") && !prefersReduced(); }
-  function sizeCanvas() { var dpr = Math.min(window.devicePixelRatio || 1, 2); fxCanvas.width = innerWidth * dpr; fxCanvas.height = innerHeight * dpr; ctx = fxCanvas.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
-  function burst(x, y, color, scale) {
-    if (!fxOn()) return; scale = scale || 1; color = (color || "#ffcf6b").trim();
-    for (var i = 0; i < 14 * scale; i++) { var a = Math.random() * Math.PI * 2, sp = (1 + Math.random() * 3) * scale;
-      particles.push({ x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1, life: 1, decay: 0.012 + Math.random() * 0.02, size: 1.5 + Math.random() * 2.6, color: color }); }
-    ensureLoop();
-  }
-  function ensureLoop() { if (!rafId) rafId = requestAnimationFrame(loop); }
-  function loop() {
-    rafId = null; if (!ctx) return;
-    ctx.clearRect(0, 0, innerWidth, innerHeight);
-    if (fxOn()) { trailAccum++; if (trailAccum % 7 === 0) {
-      var r = marker.getBoundingClientRect();
-      if (r.top > -40 && r.top < innerHeight + 40) particles.push({ x: r.left + r.width / 2 + (Math.random() - 0.5) * 10, y: r.top + r.height / 2, vx: (Math.random() - 0.5) * 0.4, vy: -0.3 - Math.random() * 0.5, life: 1, decay: 0.02, size: 1 + Math.random() * 1.8, color: getComputedStyle(rootStyleEl()).getPropertyValue("--gold").trim() || "#ffcf6b" });
-    } }
-    for (var i = particles.length - 1; i >= 0; i--) { var p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.04; p.life -= p.decay; if (p.life <= 0) { particles.splice(i, 1); continue; } ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.color; star(p.x, p.y, p.size * (0.5 + p.life)); }
-    ctx.globalAlpha = 1;
-    if (particles.length || fxOn()) rafId = requestAnimationFrame(loop);
-  }
-  function rootStyleEl() { return document.documentElement; }
+  function sizeCanvas() { var d = Math.min(window.devicePixelRatio || 1, 2); canvas.width = innerWidth * d; canvas.height = innerHeight * d; ctx = canvas.getContext("2d"); ctx.setTransform(d, 0, 0, d, 0, 0); }
+  function sparkleAt(node) { var r = node.getBoundingClientRect(); burst(r.left + r.width * 0.5, r.top + r.height * 0.5, getComputedStyle(document.documentElement).getPropertyValue("--gold").trim() || "#ffcf6b", 1.2); }
+  function burst(x, y, color, sc) { if (!fxOn()) return; sc = sc || 1; color = (color || "#ffcf6b").trim(); for (var i = 0; i < 14 * sc; i++) { var a = Math.random() * 6.28, s = (1 + Math.random() * 3) * sc; parts.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 1, life: 1, dec: 0.012 + Math.random() * 0.02, sz: 1.5 + Math.random() * 2.6, c: color }); } loop(); }
+  function loop() { if (raf) return; raf = requestAnimationFrame(function () { raf = null; if (!ctx) return; ctx.clearRect(0, 0, innerWidth, innerHeight); for (var i = parts.length - 1; i >= 0; i--) { var p = parts[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.04; p.life -= p.dec; if (p.life <= 0) { parts.splice(i, 1); continue; } ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.c; star(p.x, p.y, p.sz * (0.5 + p.life)); } ctx.globalAlpha = 1; if (parts.length) loop(); }); }
   function star(x, y, r) { ctx.beginPath(); for (var i = 0; i < 4; i++) { var a = (Math.PI / 2) * i; ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); ctx.lineTo(x + Math.cos(a + Math.PI / 4) * r * 0.4, y + Math.sin(a + Math.PI / 4) * r * 0.4); } ctx.closePath(); ctx.fill(); }
-  document.addEventListener("visibilitychange", function () { if (document.hidden && rafId) { cancelAnimationFrame(rafId); rafId = null; } else ensureLoop(); });
 
-  /* ---------- name gate ---------- */
-  function openNameGate() {
-    var choices = $("nameChoices"); choices.innerHTML = "";
-    ["Nolan", "Friend 2", "Friend 3", "Friend 4"].forEach(function (n) { var b = document.createElement("button"); b.type = "button"; b.textContent = n; b.addEventListener("click", function () { commitName(n); }); choices.appendChild(b); });
-    $("namegate").hidden = false;
+  /* ----------------------------------------------------------- sound (web audio) */
+  var AC = null, soundOn = localStorage.getItem("disney_sound") === "1";
+  function audio() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } return AC; }
+  function tone(freq, dur, type, vol, when) { var ac = audio(); if (!ac) return; var t0 = ac.currentTime + (when || 0); var o = ac.createOscillator(), g = ac.createGain(); o.type = type || "sine"; o.frequency.value = freq; g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol || 0.2, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur); o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0 + dur + 0.02); }
+  function sound(kind) {
+    if (!soundOn) return;
+    if (kind === "stamp") { var ac = audio(); if (ac) { var o = ac.createOscillator(), g = ac.createGain(); o.type = "square"; o.frequency.setValueAtTime(180, ac.currentTime); o.frequency.exponentialRampToValueAtTime(70, ac.currentTime + 0.12); g.gain.setValueAtTime(0.25, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.16); o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.18); } }
+    else if (kind === "chime") { tone(880, 0.5, "sine", 0.2, 0); tone(1320, 0.6, "sine", 0.15, 0.08); tone(1760, 0.7, "sine", 0.1, 0.16); }
+    else if (kind === "whistle") { tone(700, 0.5, "triangle", 0.15, 0); tone(900, 0.5, "triangle", 0.12, 0.18); }
   }
-  function commitName(n) {
-    myName = n.trim().slice(0, 14) || "Guest"; localStorage.setItem("disney_name", myName);
-    $("namegate").hidden = true;
-    if (pendingTap) { var p = pendingTap; pendingTap = null; onStopTap(p.id, p.stop); }
-  }
-  $("nameForm").addEventListener("submit", function (e) { e.preventDefault(); var v = $("nameInput").value.trim(); if (v) commitName(v); });
 
-  /* ---------- info / dedication overlay ---------- */
+  /* ----------------------------------------------------------- notifications + scheduling */
+  var alertsOn = localStorage.getItem("disney_alerts") === "1", timers = [];
+  function alertItems() {
+    var items = [];
+    BLOCKS.forEach(function (b) {
+      if (b.deadline) {
+        items.push({ min: b.deadline.atMin - 3, title: "World of Color VQ", body: "Virtual queue opens in 3 minutes — get all four tickets ready." });
+        items.push({ min: b.deadline.atMin, title: "VQ is OPEN", body: b.deadline.fire || "Book the virtual queue now." });
+      }
+    });
+    return items;
+  }
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+  function scheduleAlerts() {
+    clearTimers();
+    if (!alertsOn || test.active) return;   // in test mode use the manual button
+    var nm = realMin();
+    alertItems().forEach(function (it) {
+      var ms = (it.min - nm) * 60000;
+      if (ms > 0 && ms < 16 * 3600000) timers.push(setTimeout(function () { fireAlert(it.title, it.body); }, ms));
+    });
+  }
+  function fireAlert(title, body) {
+    showToast(title + " — " + body);
+    sound("chime");
+    if (fxOn()) for (var i = 0; i < 16; i++) (function (k) { setTimeout(function () { burst(innerWidth * (0.2 + Math.random() * 0.6), innerHeight * (0.2 + Math.random() * 0.3), "#ff5fa2", 1); }, k * 30); })(i);
+    if (navigator.vibrate) try { navigator.vibrate([60, 40, 60]); } catch (e) {}
+    if ("Notification" in window && Notification.permission === "granted") {
+      try {
+        if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(function (reg) { reg.showNotification(title, { body: body, icon: "assets/disney/app-icon.svg", badge: "assets/disney/app-icon.svg", tag: "parkday" }); });
+        else new Notification(title, { body: body });
+      } catch (e) {}
+    }
+  }
+  var toastT = null;
+  function showToast(msg) { var t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 6000); }
+
+  function requestAlerts() {
+    if (!("Notification" in window)) { alertsOn = !alertsOn; persistAlerts(); return; }
+    if (Notification.permission === "granted") { alertsOn = !alertsOn; persistAlerts(); }
+    else if (Notification.permission !== "denied") { Notification.requestPermission().then(function (p) { alertsOn = (p === "granted"); persistAlerts(); }); }
+    else { alertsOn = false; persistAlerts(); showToast("Notifications are blocked in your browser settings."); }
+  }
+  function persistAlerts() { localStorage.setItem("disney_alerts", alertsOn ? "1" : "0"); scheduleAlerts(); syncSettings(); }
+
+  /* ----------------------------------------------------------- overlays + settings wiring */
+  function openOverlay(id) { $(id).hidden = false; }
+  function closeOverlay(id) { $(id).hidden = true; }
+  document.addEventListener("click", function (e) { var c = e.target.closest("[data-close]"); if (!c) return; var ov = c.closest(".sheet, .overlay"); if (ov === $("sheet")) closeSheet(); else if (ov) ov.hidden = true; });
+
+  function buildDirectory() {
+    var list = $("dirList"); list.innerHTML = "";
+    BLOCKS.forEach(function (b, i) {
+      var zone = DAY.zones[b.zone];
+      var row = document.createElement("button"); row.className = "dir-row"; row.style.setProperty("--rc", zone.accent);
+      var sceneIdx = scenes.findIndex(function (s) { return s.block === b; });
+      row.innerHTML = '<span class="dr-time">' + esc(b.time) + '</span><span class="dr-name">' + esc(b.title) + '</span><span class="dr-done" data-block="' + b.id + '"></span>';
+      row.addEventListener("click", function () { closeOverlay("directory"); scrollToScene(sceneIdx); });
+      list.appendChild(row);
+    });
+    updateDirCounts();
+  }
+  function updateDirCounts() {
+    BLOCKS.forEach(function (b) {
+      var done = 0, tot = (b.quests || []).length;
+      (b.quests || []).forEach(function (q) { if (countDone(q.id) > 0) done++; });
+      var el = document.querySelector('.dr-done[data-block="' + b.id + '"]');
+      if (el) el.textContent = tot ? done + "/" + tot : "";
+    });
+  }
+
+  function buildParty() {
+    var list = $("partyList"); list.innerHTML = "";
+    party.forEach(function (name, i) {
+      var g = GKEYS[i];
+      var row = document.createElement("div"); row.className = "party-row";
+      row.innerHTML = '<span class="guest-badge ' + g + '">' + esc((name[0] || "?").toUpperCase()) + '</span>';
+      var inp = document.createElement("input"); inp.value = name; inp.maxLength = 14;
+      inp.addEventListener("change", function () { party[i] = inp.value.trim().slice(0, 14) || ("Guest " + (i + 1)); row.querySelector(".guest-badge").textContent = (party[i][0] || "?").toUpperCase(); pushParty(); });
+      row.appendChild(inp); list.appendChild(row);
+    });
+    var mineWrap = $("partyMine"); mineWrap.innerHTML = "";
+    party.forEach(function (name, i) {
+      var g = GKEYS[i];
+      var b = document.createElement("button"); b.textContent = name; b.className = g === mine ? "sel" : "";
+      b.addEventListener("click", function () { mine = g; localStorage.setItem("disney_me", g); buildParty(); if (curSheetId) refreshSheet(curSheetId); });
+      mineWrap.appendChild(b);
+    });
+  }
+
+  function syncSettings() {
+    setRow("alertsToggle", "alertsState", alertsOn);
+    setRow("soundToggle", "soundState", soundOn);
+    setRow("fxToggle", "fxState", !document.body.classList.contains("no-fx"));
+    setRow("motionToggle", "motionState", document.body.classList.contains("reduce-fx"));
+    var note = $("alertsNote");
+    if (note) note.textContent = ("Notification" in window)
+      ? "Alerts fire while this map is open. For lock-screen reminders on iPhone, add this to your Home Screen first (Share → Add to Home Screen)."
+      : "This browser doesn't support notifications; you'll still see in-app reminders.";
+  }
+  function setRow(btnId, stateId, on) { var b = $(btnId), s = $(stateId); if (b) b.classList.toggle("on", on); if (s) s.textContent = on ? "On" : "Off"; }
+
+  /* ----------------------------------------------------------- dedication */
   function fillDedication() {
-    $("dedBody").textContent = "Disneyland is your land. Seventy-one years ago today — July 17, 1955 — Walt opened these gates. Today they're yours.";
-    $("dedSync").innerHTML = "This is your party's <strong>shared map</strong>. Every stamp you collect appears on all four phones, live. One day, two parks, endless magic — wander together, even when you split up.";
+    $("dedBody").textContent = "Disneyland is your land. Seventy-one years ago to the day — July 17, 1955 — Walt opened these gates with these words. Today, they're yours.";
+    $("dedSync").innerHTML = "This is your party's <strong>shared map</strong>. Every stamp the four of you collect appears on all your phones, live — wander together, even when you split up. Time-sensitive reminders (like the World of Color queue) can buzz you in Settings.";
   }
-  $("infoBtn").addEventListener("click", function () { $("info").hidden = false; });
-  $("enterBtn").addEventListener("click", function () { $("info").hidden = true; try { localStorage.setItem("disney_seen", "1"); } catch (e) {} });
 
-  /* ---------- effects toggle ---------- */
-  function applyFxPref() { var off = localStorage.getItem("disney_fx") === "0"; document.body.classList.toggle("no-fx", off); $("fxBtn").style.opacity = off ? 0.45 : 1; if (!off) ensureLoop(); }
-  $("fxBtn").addEventListener("click", function () { var off = localStorage.getItem("disney_fx") === "0"; localStorage.setItem("disney_fx", off ? "1" : "0"); applyFxPref(); });
-
-  /* ---------- testing panel ---------- */
+  /* ----------------------------------------------------------- testing */
   var scrubbing = false;
   function initTesting() {
     var peek = $("testpeek"), panel = $("testpanel");
     if (test.active) panel.hidden = false;
     peek.hidden = false;
-    peek.addEventListener("click", function () { test.active = !test.active; panel.hidden = !test.active; if (!test.active) test.playing = false; else test.min = now(); tickClock(); onScroll(); });
-    $("tpClose").addEventListener("click", function () { test.active = false; test.playing = false; panel.hidden = true; tickClock(); onScroll(); });
-    $("tpLive").addEventListener("click", function () { test.active = false; test.playing = false; tickClock(); onScroll(); });
+    peek.addEventListener("click", function () { test.active = !test.active; panel.hidden = !test.active; if (!test.active) test.playing = false; else test.min = now(); updateNow(); onScroll(); });
+    $("tpClose").addEventListener("click", function () { test.active = false; test.playing = false; panel.hidden = true; updateNow(); });
+    $("tpLive").addEventListener("click", function () { test.active = false; test.playing = false; updateNow(); });
     var scrub = $("tpScrub");
-    scrub.addEventListener("input", function () { test.active = true; panel.hidden = false; scrubbing = true; test.playing = false; $("tpPlay").classList.remove("active"); $("tpPlay").textContent = "▶ Play"; test.min = +scrub.value; tickClock(); onScroll(); });
+    scrub.addEventListener("input", function () { test.active = true; panel.hidden = false; scrubbing = true; test.playing = false; $("tpPlay").classList.remove("active"); $("tpPlay").textContent = "Play"; test.min = +scrub.value; updateNow(); updateReturnNow(); refreshAhead(); });
     scrub.addEventListener("change", function () { scrubbing = false; });
-    $("tpPlay").addEventListener("click", function () { test.active = true; panel.hidden = false; test.playing = !test.playing; this.classList.toggle("active", test.playing); this.textContent = test.playing ? "⏸ Pause" : "▶ Play"; test.lastTick = performance.now(); });
+    $("tpPlay").addEventListener("click", function () { test.active = true; panel.hidden = false; test.playing = !test.playing; this.classList.toggle("active", test.playing); this.textContent = test.playing ? "Pause" : "Play"; test.lastTick = performance.now(); });
     document.querySelectorAll(".tp-speed").forEach(function (btn) { btn.addEventListener("click", function () { test.speed = +btn.dataset.speed; document.querySelectorAll(".tp-speed").forEach(function (b) { b.classList.remove("active"); }); btn.classList.add("active"); }); });
-    document.querySelectorAll(".tp-chip").forEach(function (btn) { btn.addEventListener("click", function () { test.active = true; panel.hidden = false; test.playing = false; $("tpPlay").classList.remove("active"); $("tpPlay").textContent = "▶ Play"; test.min = +btn.dataset.min; tickClock(); var my = yForMin(test.min); window.scrollTo({ top: my - vh() * 0.42, behavior: "smooth" }); }); });
-    var roomBtn = $("tpRoom"); function syncRoom() { roomBtn.textContent = "Room: " + (room === ROOM_TEST ? "TEST" : "LIVE"); } syncRoom();
-    roomBtn.addEventListener("click", function () { room = room === ROOM_TEST ? ROOM_REAL : ROOM_TEST; localStorage.setItem("disney_testroom", room === ROOM_TEST ? "1" : "0"); syncRoom(); if (db) bindRoom(); else { loadLocal(); repaintAll(); } });
-    $("tpReset").addEventListener("click", resetAll);
-    var mo = $("tpMotion"); mo.addEventListener("click", function () { var on = document.body.classList.toggle("reduce-fx"); mo.textContent = "Reduce motion: " + (on ? "on" : "off"); mo.classList.toggle("active", on); if (!on) ensureLoop(); });
+    document.querySelectorAll(".tp-chip").forEach(function (btn) { btn.addEventListener("click", function () { test.active = true; panel.hidden = false; test.min = +btn.dataset.min; updateNow(); var i = nowSceneIndex(); scrollToScene(i); }); });
+    var roomBtn = $("tpRoom"); function sr() { roomBtn.textContent = "Room: " + (room === ROOM_TEST ? "TEST" : "LIVE"); } sr();
+    roomBtn.addEventListener("click", function () { room = room === ROOM_TEST ? ROOM_REAL : ROOM_TEST; localStorage.setItem("disney_testroom", room === ROOM_TEST ? "1" : "0"); sr(); if (db) { bindRoom(); bindParty(); } else { loadLocal(); repaintAll(); } });
+    $("tpReset").addEventListener("click", function () { if (!confirm("Reset every stamp for the whole party?")) return; Object.keys(signEls).forEach(function (id) { GKEYS.forEach(function (g) { if (isDone(id, g)) setGuest(id, g, false); }); }); });
+    $("tpAlert").addEventListener("click", function () { fireAlert("World of Color VQ", "Virtual queue opens in 3 minutes — get all four tickets ready."); });
     var def = document.querySelector('.tp-speed[data-speed="60"]'); if (def) def.classList.add("active");
   }
   function testLoop(ts) {
-    if (test.active && test.playing) { if (!test.lastTick) test.lastTick = ts; var dt = (ts - test.lastTick) / 1000; test.lastTick = ts; test.min += dt * (test.speed / 60); if (test.min >= DAY_END) { test.min = DAY_END; test.playing = false; var pb = $("tpPlay"); if (pb) { pb.classList.remove("active"); pb.textContent = "▶ Play"; } } tickClock(); }
+    if (test.active && test.playing) { if (!test.lastTick) test.lastTick = ts; var dt = (ts - test.lastTick) / 1000; test.lastTick = ts; test.min += dt * (test.speed / 60); if (test.min >= DAY_END) { test.min = DAY_END; test.playing = false; var pb = $("tpPlay"); if (pb) { pb.classList.remove("active"); pb.textContent = "Play"; } } updateNow(); updateReturnNow(); var tc = $("tpClock"); if (tc) tc.textContent = fmt(test.min); var s = $("tpScrub"); if (s && !scrubbing) s.value = Math.round(test.min); }
     else test.lastTick = 0;
     requestAnimationFrame(testLoop);
   }
 
-  /* ---------- boot ---------- */
+  /* ----------------------------------------------------------- boot */
   function boot() {
+    hydrateIcons();
     sizeCanvas();
     build();
-    buildProps();
+    loadBackdrops();
     fillDedication();
-    // two layout passes (fonts/props can shift heights); also after a short delay
-    requestAnimationFrame(function () { layout(); buildAnchors(); finishBoot(); });
-  }
-  function finishBoot() {
     var live = initFirebase();
     if (!live) { loadLocal(); repaintAll(); }
-    applyFxPref();
-    initTesting();
-    watchBattery();
+    else { loadLocal(); repaintAll(); }   // paint cached immediately; firebase repaints on snapshot
 
+    // settings state
+    if (localStorage.getItem("disney_fx") === "0") document.body.classList.add("no-fx");
+    buildDirectory(); buildParty(); syncSettings();
+
+    // wiring
+    $("dirBtn").addEventListener("click", function () { updateDirCounts(); openOverlay("directory"); });
+    $("setBtn").addEventListener("click", function () { syncSettings(); openOverlay("settings"); });
+    $("dirSummary").addEventListener("click", function () { closeOverlay("directory"); scrollToScene(scenes.length - 1); });
+    $("navPrev").addEventListener("click", function () { scrollToScene(Math.max(0, active - 1)); });
+    $("navNext").addEventListener("click", function () { scrollToScene(Math.min(scenes.length - 1, active + 1)); });
+    $("returnNow").addEventListener("click", function () { scrollToScene(nowSceneIndex()); });
+    $("alertsToggle").addEventListener("click", requestAlerts);
+    $("soundToggle").addEventListener("click", function () { soundOn = !soundOn; localStorage.setItem("disney_sound", soundOn ? "1" : "0"); if (soundOn) { audio(); sound("chime"); } syncSettings(); });
+    $("fxToggle").addEventListener("click", function () { var off = document.body.classList.toggle("no-fx"); localStorage.setItem("disney_fx", off ? "0" : "1"); syncSettings(); });
+    $("motionToggle").addEventListener("click", function () { document.body.classList.toggle("reduce-fx"); syncSettings(); });
+    $("partyBtn").addEventListener("click", function () { closeOverlay("settings"); buildParty(); openOverlay("party"); });
+    $("aboutBtn").addEventListener("click", function () { closeOverlay("settings"); openOverlay("info"); });
+    $("enterBtn").addEventListener("click", function () { closeOverlay("info"); try { localStorage.setItem("disney_seen", "1"); } catch (e) {} });
+
+    initTesting();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", function () { sizeCanvas(); layout(); buildAnchors(); onScroll(); });
-    setInterval(function () { if (!(test.active && test.playing)) tickClock(); }, 20000);
+    window.addEventListener("resize", function () { sizeCanvas(); onScroll(); });
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) onScroll(); });
+    setInterval(function () { if (!(test.active && test.playing)) { updateNow(); updateReturnNow(); checkLiveDeadline(); } }, 20000);
     requestAnimationFrame(testLoop);
 
-    if (test.active) test.min = DAY_START;
-    onScroll(); tickClock();
+    // PWA
+    if ("serviceWorker" in navigator) { try { navigator.serviceWorker.register("sw.js").catch(function () {}); } catch (e) {} }
+    scheduleAlerts();
 
-    // re-measure after web fonts settle, then position to "now" / show dedication
+    if (test.active) test.min = DAY_START;
+    updateNow(); onScroll();
+
     setTimeout(function () {
-      layout(); buildAnchors(); onScroll(); tickClock();
-      var firstRun = !localStorage.getItem("disney_seen");
-      if (firstRun) { $("info").hidden = false; }
-      else { var my = yForMin(now()); window.scrollTo({ top: Math.max(0, my - vh() * 0.42), behavior: "auto" }); }
-    }, 450);
+      onScroll();
+      if (!localStorage.getItem("disney_seen")) openOverlay("info");
+      else scrollToScene(nowSceneIndex(), false);
+    }, 400);
   }
-  function watchBattery() {
-    if (!navigator.getBattery) return;
-    navigator.getBattery().then(function (bat) { function chk() { if (!bat.charging && bat.level <= 0.2) document.body.classList.add("reduce-fx"); } bat.addEventListener("levelchange", chk); bat.addEventListener("chargingchange", chk); chk(); }).catch(function () {});
+
+  // catch the live VQ deadline if the app is open across it (no scheduled timer fired)
+  var firedLive = {};
+  function checkLiveDeadline() {
+    if (test.active) return;
+    var nm = realMin();
+    BLOCKS.forEach(function (b) { if (b.deadline && nm >= b.deadline.atMin && nm < b.deadline.atMin + 2 && !firedLive[b.id]) { firedLive[b.id] = true; if (alertsOn) fireAlert("VQ is OPEN", b.deadline.fire || "Book the virtual queue now."); } });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();

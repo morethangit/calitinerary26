@@ -4,14 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#bfe3ff" />
-  <title>Disneyland · A Day of Magic</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Park Day" />
+  <title>A Park Day · Disneyland</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/disney/app-icon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Grand+Hotel&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="disney.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Lobster+Two:ital,wght@0,400;0,700;1,700&family=Righteous&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="disney.css?v=4" />
 </head>
 <body>
-  <!-- z0 — living sky -->
+  <!-- living sky (time of day) -->
   <div id="sky" aria-hidden="true">
     <div id="stars"></div>
     <div id="celestial"><span id="sun"></span><span id="moon"></span></div>
@@ -19,73 +24,99 @@
     <div id="tint"></div>
   </div>
 
-  <!-- the scrolling world: props + trail are sized to the document in JS -->
-  <div id="scene">
-    <div id="props" aria-hidden="true"></div>
+  <!-- the film: full-screen scenes injected by JS -->
+  <main id="film"></main>
 
-    <svg id="trail" aria-hidden="true" preserveAspectRatio="none">
-      <path id="trailBase" fill="none" />
-      <path id="trailGlow" fill="none" />
-    </svg>
-    <div id="marker" aria-hidden="true"><span class="marker-core"></span><span class="marker-ring"></span></div>
-
-    <!-- overture + roadmap stops injected here -->
-    <main id="stops"></main>
-  </div>
-
-  <!-- sparkle FX -->
+  <!-- sparkle fx -->
   <canvas id="fx" aria-hidden="true"></canvas>
 
-  <!-- floating controls -->
-  <div id="hud">
-    <button id="infoBtn" class="round-btn" title="About this map" aria-label="About">i</button>
-    <div id="stampCount" class="stamp-count">0 of 0 stamps</div>
-    <button id="fxBtn" class="round-btn" title="Toggle sparkles" aria-label="Toggle sparkles">✦</button>
-  </div>
-  <button id="returnNow" class="return-now" hidden>✦ Return to Now</button>
-  <div id="aheadBanner" class="ahead-banner" hidden></div>
+  <!-- top bar: directory · current land · settings -->
+  <header id="topbar">
+    <button id="dirBtn" class="ghost-btn" aria-label="Park directory" data-icon="map"></button>
+    <div id="nowPlate" class="now-plate"><span id="nowTime">8:00 AM</span><span id="nowLand">Main Street</span></div>
+    <button id="setBtn" class="ghost-btn" aria-label="Settings" data-icon="gear"></button>
+  </header>
 
-  <!-- dedication / info overlay (first run) -->
+  <!-- integrated prev/next signpost arrows -->
+  <button id="navPrev" class="signpost-arrow up" aria-label="Previous land"><span data-icon="chevron-up"></span></button>
+  <button id="navNext" class="signpost-arrow down" aria-label="Next land"><span data-icon="chevron-down"></span></button>
+
+  <button id="returnNow" class="return-now" hidden><span data-icon="pin"></span> Now</button>
+  <div id="aheadBanner" class="ahead-banner" hidden></div>
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- attraction detail sheet (expand / collapse) -->
+  <div id="sheet" class="sheet" hidden>
+    <div class="sheet-scrim" data-close></div>
+    <div class="sheet-body">
+      <button class="sheet-close" data-close aria-label="Close"><span data-icon="close"></span></button>
+      <div id="sheetContent"></div>
+    </div>
+  </div>
+
+  <!-- directory (jump to land) -->
+  <div id="directory" class="overlay" hidden>
+    <div class="overlay-scrim" data-close></div>
+    <div class="directory-body">
+      <h2 class="dir-title">Park Directory</h2>
+      <div id="dirList" class="dir-list"></div>
+      <button class="dir-summary" id="dirSummary"><span data-icon="book"></span> Our Day — the journal</button>
+    </div>
+  </div>
+
+  <!-- settings -->
+  <div id="settings" class="overlay" hidden>
+    <div class="overlay-scrim" data-close></div>
+    <div class="settings-body">
+      <button class="sheet-close" data-close aria-label="Close"><span data-icon="close"></span></button>
+      <h2 class="set-title">Settings</h2>
+      <button class="set-row" id="alertsToggle"><span data-icon="bell"></span><span class="set-label">Time-sensitive alerts</span><span class="set-state" id="alertsState">Off</span></button>
+      <button class="set-row" id="soundToggle"><span data-icon="sound"></span><span class="set-label">Park sounds</span><span class="set-state" id="soundState">Off</span></button>
+      <button class="set-row" id="fxToggle"><span data-icon="sparkle"></span><span class="set-label">Sparkle effects</span><span class="set-state" id="fxState">On</span></button>
+      <button class="set-row" id="motionToggle"><span data-icon="motion"></span><span class="set-label">Reduce motion</span><span class="set-state" id="motionState">Off</span></button>
+      <button class="set-row" id="partyBtn"><span data-icon="party"></span><span class="set-label">Edit our party</span><span class="set-state">4</span></button>
+      <button class="set-row" id="aboutBtn"><span data-icon="info"></span><span class="set-label">About this map</span><span class="set-state"></span></button>
+      <p class="set-note" id="alertsNote"></p>
+    </div>
+  </div>
+
+  <!-- party editor -->
+  <div id="party" class="overlay" hidden>
+    <div class="overlay-scrim" data-close></div>
+    <div class="party-body">
+      <button class="sheet-close" data-close aria-label="Close"><span data-icon="close"></span></button>
+      <h2 class="set-title">Our Party</h2>
+      <p class="party-hint">Four explorers. Tap a name to rename. Everyone's stamps sync live.</p>
+      <div id="partyList" class="party-list"></div>
+      <p class="party-hint">Which one is this phone?</p>
+      <div id="partyMine" class="party-mine"></div>
+    </div>
+  </div>
+
+  <!-- dedication / about -->
   <div id="info" class="overlay" hidden>
+    <div class="overlay-scrim" data-close></div>
     <div class="dedication">
       <div class="ded-plaque">
         <p class="ded-eyebrow">To all who come to this happy place</p>
         <h1 class="ded-welcome">Welcome</h1>
         <p class="ded-body" id="dedBody"></p>
-        <p class="ded-sign">— Walt Disney, July 17, 1955</p>
+        <p class="ded-sign">Walt Disney &middot; July 17, 1955</p>
       </div>
       <div class="ded-sync" id="dedSync"></div>
-      <button id="enterBtn" class="enter-btn">Step inside →</button>
+      <button id="enterBtn" class="enter-btn">Step inside</button>
     </div>
   </div>
 
-  <!-- name picker -->
-  <div id="namegate" class="overlay" hidden>
-    <div class="overlay-card">
-      <div class="overlay-spark">✨</div>
-      <h2>Who's exploring?</h2>
-      <p>Pick your name so your party sees who's collected which stamps.</p>
-      <div id="nameChoices" class="name-choices"></div>
-      <form id="nameForm" class="name-form">
-        <input id="nameInput" type="text" placeholder="…or type your name" maxlength="14" autocomplete="off" />
-        <button type="submit">Start</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- testing panel (?test=1) -->
+  <!-- testing panel -->
   <div id="testpanel" class="testpanel" hidden>
-    <div class="tp-head">
-      <span class="tp-title">🧪 Testing</span>
-      <span id="tpClock" class="tp-clock">8:00 AM</span>
-      <button id="tpClose" class="tp-close" aria-label="Exit testing mode">✕</button>
-    </div>
+    <div class="tp-head"><span class="tp-title">Testing</span><span id="tpClock" class="tp-clock">8:00 AM</span><button id="tpClose" class="tp-close" aria-label="Exit">x</button></div>
     <input id="tpScrub" class="tp-scrub" type="range" min="480" max="1440" step="1" value="480" />
     <div class="tp-controls">
-      <button id="tpPlay" class="tp-btn">▶ Play</button>
-      <button class="tp-btn tp-speed" data-speed="60">60×</button>
-      <button class="tp-btn tp-speed" data-speed="600">600×</button>
-      <button id="tpLive" class="tp-btn">↺ Live</button>
+      <button id="tpPlay" class="tp-btn">Play</button>
+      <button class="tp-btn tp-speed" data-speed="60">60x</button>
+      <button class="tp-btn tp-speed" data-speed="600">600x</button>
+      <button id="tpLive" class="tp-btn">Live</button>
     </div>
     <div class="tp-jumps">
       <button class="tp-chip" data-min="480">Rope Drop</button>
@@ -97,10 +128,10 @@
     <div class="tp-controls">
       <button id="tpRoom" class="tp-btn">Room: TEST</button>
       <button id="tpReset" class="tp-btn">Reset stamps</button>
-      <button id="tpMotion" class="tp-btn">Reduce motion: off</button>
+      <button id="tpAlert" class="tp-btn">Test alert</button>
     </div>
   </div>
-  <button id="testpeek" class="testpeek" hidden title="Testing mode">🧪</button>
+  <button id="testpeek" class="testpeek" hidden title="Testing mode">T</button>
 
   <script src="firebase-config.js"></script>
   <script>
@@ -112,7 +143,7 @@
       }
     })();
   </script>
-  <script src="disney-data.js"></script>
-  <script src="disney.js"></script>
+  <script src="disney-data.js?v=4"></script>
+  <script src="disney.js?v=4"></script>
 </body>
 </html>

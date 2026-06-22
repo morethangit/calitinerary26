@@ -1,0 +1,14 @@
+{
+  "name": "A Park Day · Disneyland",
+  "short_name": "Park Day",
+  "description": "Our shared, living map for one magical day at the Disneyland Resort.",
+  "start_url": "disney.html?pwa=1",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1330",
+  "theme_color": "#bfe3ff",
+  "icons": [
+    { "src": "assets/disney/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
