@@ -46,12 +46,22 @@ window.DISNEY_DAY = {
       "hop-back": "night", "night-session": "night",
     },
     landmarks: {
-      "rope-drop": "castle", "morning-sweep": "matterhorn", "new-orleans": "haunted-mansion",
-      "woc-vq": "pirates", "lunch": "pirates", "galaxys-edge": "galaxys-edge",
-      "hop-dca": "cars-land", "dca-sweep": "cars-land", "dinner": "pixar-pier",
-      "wind-down": "avengers", "woc-position": "world-of-color", "world-of-color": "world-of-color",
+      "rope-drop": "castle", "morning-sweep": "space-mountain", "new-orleans": "haunted-mansion",
+      "woc-vq": "nos-lantern", "lunch": "cafe-orleans", "galaxys-edge": "galaxys-edge",
+      "hop-dca": "esplanade", "dca-sweep": "cars-land", "dinner": "pixar-pier",
+      "wind-down": "avengers", "woc-position": "paradise-bay", "world-of-color": "world-of-color",
       "hop-back": "castle", "night-session": "fireworks",
     },
+    /* direction each land's foreground prop exits as you leave it (no hard edges) */
+    exit: {
+      "rope-drop": "left", "morning-sweep": "right", "new-orleans": "left",
+      "woc-vq": "fade", "lunch": "right", "galaxys-edge": "left",
+      "hop-dca": "up", "dca-sweep": "right", "dinner": "left",
+      "wind-down": "right", "woc-position": "fade", "world-of-color": "up",
+      "hop-back": "left", "night-session": "fade",
+    },
+    /* lands that get a slow orbiting decoration the viewport passes */
+    orbit: ["morning-sweep", "galaxys-edge", "wind-down"],
 
     /* v3 — the party. Four guests; names editable in-app (synced under
        disney2026/party). Each attraction tracks each guest independently. */
@@ -118,12 +128,12 @@ window.DISNEY_DAY = {
         "The instant the CM scans you in, open the app and book the NEXT Lightning Lane. Not after the ride — the moment you tap in.",
       ],
       quests: [
-        { id: "book-sm-ll", type: "action", star: true,
-          label: "Tap in → book Space Mountain LL",
-          note: "Highest LL demand, burns out first. Do it before you move." },
         { id: "indiana-jones-am", type: "ride", star: true,
           label: "Run Indiana Jones (standby)",
-          note: "Rope-drop standby is 15–25 min. By 10 AM it's 75+. Scan in → book Matterhorn LL." },
+          note: "Rope-drop standby is 15–25 min. By 10 AM it's 75+. (But the instant you tap in, book Space Mountain LL first — see below.) Scan in → book Matterhorn LL." },
+        { id: "book-sm-ll", type: "action", star: true,
+          label: "Tap in → book Space Mountain LL",
+          note: "Do this the moment the CM scans you in — before you even run to Indiana Jones. Highest LL demand, burns out first." },
       ],
     },
     {

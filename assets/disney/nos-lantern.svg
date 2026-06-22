@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 800" fill="none">
+  <!-- PLACEHOLDER — lantern + clock (World of Color VQ moment). Replace, keep anim- names. -->
+  <rect x="338" y="220" width="24" height="580" fill="#2e2a24"/>
+  <path d="M300 220 q50 -40 100 0 Z" fill="#2e2a24"/>
+  <!-- lantern body -->
+  <rect x="300" y="230" width="100" height="150" rx="14" fill="#3a342a"/>
+  <g id="anim-glow"><rect x="316" y="250" width="68" height="110" rx="10" fill="#ffd86b"/></g>
+  <!-- clock face hint -->
+  <circle cx="350" cy="120" r="46" fill="#f4e9d2"/>
+  <line x1="350" y1="120" x2="350" y2="88" stroke="#3a2a22" stroke-width="5"/>
+  <line x1="350" y1="120" x2="376" y2="120" stroke="#3a2a22" stroke-width="5"/>
+</svg>

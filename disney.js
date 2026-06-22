@@ -130,7 +130,7 @@
     sec.className = "scene" + (opts.future ? " future" : "");
     sec.dataset.id = opts.id;
     var beatsCount = opts.beats || 3;
-    var vhH = clamp(110 + beatsCount * 62, 200, 620);
+    var vhH = clamp(150 + beatsCount * 34, 185, 260);
     sec.style.height = vhH + "vh";
     var stage = document.createElement("div"); stage.className = "stage";
     var back = document.createElement("div"); back.className = "scene-backdrop"; back.dataset.motion = opts.motion || "drift";
@@ -141,15 +141,35 @@
     return { sec: sec, stage: stage, back: back };
   }
 
+  // a slowly-spinning decoration the viewport passes (Tomorrowland / Batuu)
+  var ORBIT_SVG = '<div class="orbit-spin"><svg viewBox="0 0 120 120">' +
+    '<ellipse cx="60" cy="60" rx="54" ry="20" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"/>' +
+    '<circle cx="60" cy="60" r="16" fill="#ffd86b"/>' +
+    '<circle cx="114" cy="60" r="5" fill="#fff"/></svg></div>';
+
+  // add one parallax layer to a scene backdrop
+  function addLayer(back, opts) {
+    var d = document.createElement("div");
+    d.className = "layer " + (opts.klass || "");
+    d.dataset.depth = opts.depth != null ? opts.depth : 1;
+    d.dataset.exit = opts.exit || "fade";
+    d.dataset.basex = opts.basex || "-50%";
+    if (opts.css) d.style.cssText = opts.css;
+    if (opts.prop) d.dataset.prop = opts.prop;
+    if (opts.html) d.innerHTML = opts.html;
+    back.appendChild(d);
+    return d;
+  }
+
   function buildOverture() {
     var sh = sceneShell({ id: "overture", motion: "zoom", beats: 3 });
-    // layered Main Street composition
     var comp = sh.back;
-    comp.innerHTML =
-      '<div class="ov-layer" data-prop="castle" style="position:absolute;left:50%;bottom:34%;width:34%;transform:translateX(-50%);opacity:.7"></div>' +
-      '<div class="ov-layer" data-prop="train-station" style="position:absolute;left:50%;bottom:20%;width:62%;transform:translateX(-50%)"></div>' +
-      '<div class="ov-layer" data-prop="mainstreet-left" style="position:absolute;left:0;bottom:0;width:42%"></div>' +
-      '<div class="ov-layer" data-prop="mainstreet-right" style="position:absolute;right:0;bottom:0;width:42%"></div>';
+    // distant horizon, then the castle, the station, and the parting buildings
+    addLayer(comp, { klass: "bg", depth: 0.3, exit: "fade" });
+    addLayer(comp, { klass: "fg", prop: "castle", depth: 0.55, exit: "left", css: "left:50%;bottom:30%;width:34%" });
+    addLayer(comp, { klass: "fg", prop: "train-station", depth: 0.7, exit: "up", css: "left:50%;bottom:18%;width:62%" });
+    addLayer(comp, { klass: "fg", prop: "mainstreet-left", depth: 0.95, exit: "left", basex: "0", css: "left:0;bottom:0;width:48%" });
+    addLayer(comp, { klass: "fg", prop: "mainstreet-right", depth: 0.95, exit: "right", basex: "0", css: "right:0;bottom:0;width:48%" });
     var stage = sh.stage;
     var title = document.createElement("div");
     title.className = "scene-title";
@@ -175,7 +195,11 @@
     var beatN = 1 + stops.length + notes.length;
     var sh = sceneShell({ id: block.id, motion: motion, beats: beatN, future: future });
     sh.sec.style.setProperty("--zone", zone.accent);
-    sh.back.dataset.prop = M.landmarks[block.id] || "";
+    // layered backdrop: distant horizon (bg) + optional orbit + foreground landmark
+    addLayer(sh.back, { klass: "bg", depth: 0.32, exit: "fade" });
+    if ((M.orbit || []).indexOf(block.id) >= 0)
+      addLayer(sh.back, { klass: "orbit", depth: 0.7, exit: "up", html: ORBIT_SVG, css: "left:50%;top:13%;bottom:auto;width:118px" });
+    addLayer(sh.back, { klass: "fg", depth: 1, exit: (M.exit && M.exit[block.id]) || "fade", prop: M.landmarks[block.id] || "" });
     var stage = sh.stage;
 
     // title beat
@@ -189,14 +213,14 @@
     stage.appendChild(title);
     var beats = [{ el: title, center: 0.12, kind: "title" }];
 
-    // interleave notes + stops as beats with varied anchors
-    var anchors = ["anchor-mr", "anchor-bl", "anchor-ml", "anchor-br", "anchor-cl", "anchor-tr"];
+    // notes + stops as beats; anchors descend the screen as you scroll (spatial = reveal order)
+    var anchors = ["anchor-ml", "anchor-mr", "anchor-cl", "anchor-bl", "anchor-br", "anchor-tr"];
     var seq = [];
     notes.forEach(function (n) { seq.push({ kind: "note", note: n }); });
     stops.forEach(function (q) { seq.push({ kind: "stop", q: q }); });
     var N = seq.length;
     seq.forEach(function (item, i) {
-      var center = N ? clamp(0.28 + (i + 0.5) / N * 0.62, 0, 1) : 0.5;
+      var center = N ? clamp(0.30 + (i + 0.5) / N * 0.64, 0, 1) : 0.5;
       var beat = document.createElement("div");
       beat.className = "beat " + anchors[i % anchors.length];
       beat.dataset.center = center;
@@ -269,18 +293,23 @@
     html += '<div class="sheet-title' + (future ? " scene-future-title" : "") + '">' + esc(q.label) + (q.star ? " " + svg("star", "solid") : "") + "</div>";
     if (q.note) html += '<p class="sheet-note">' + esc(q.note) + "</p>";
     if (block.deadline && q.type === "deadline") html += '<div class="sheet-deadline">' + svg("vq") + " " + esc(block.deadline.label) + " &middot; opens at " + fmt(block.deadline.atMin) + "</div>";
-    html += '<div class="sheet-section-label">Who did this?</div>';
-    GKEYS.forEach(function (g, i) {
+    function guestRow(g, primary) {
+      var i = GKEYS.indexOf(g);
       var done = isDone(id, g), rec = state[id] && state[id][g], rot = rec && rec.rot != null ? rec.rot : -8;
       var label = party[i] || ("Guest " + (i + 1));
-      html += '<div class="guest-row" data-g="' + g + '">' +
+      return '<div class="guest-row' + (primary ? " primary" : "") + '" data-g="' + g + '">' +
         '<span class="guest-badge ' + g + '">' + esc((label[0] || "?").toUpperCase()) + "</span>" +
         '<span class="guest-name">' + esc(label) + (g === mine ? '<span class="you">YOU</span>' : "") + "</span>" +
         '<span class="guest-toggle">' + (done
           ? '<span class="stamp' + (popGuest === id + ":" + g ? " pop" : "") + '" style="color:' + st.ink + ';--rot:' + rot + 'deg">' + esc(st.label) + "</span>"
           : '<span class="togbox"></span>') + "</span>" +
         "</div>";
-    });
+    }
+    // primary = this phone's guest (one tap, no name-picking); others are secondary
+    html += '<div class="sheet-section-label">Your stamp</div>' + guestRow(mine, true);
+    var others = GKEYS.filter(function (g) { return g !== mine; });
+    html += '<div class="sheet-section-label">Log for the group</div>';
+    others.forEach(function (g) { html += guestRow(g, false); });
     var c = $("sheetContent");
     c.innerHTML = html;
     popGuest = null;
@@ -308,11 +337,10 @@
         var p = clamp((sy - top) / Math.max(1, h - V), 0, 1);
         scenes[i]._p = p;
         if (center >= top && center < top + h) { act = i; actP = p; }
-        // reveal beats + motion only for near scenes (perf)
-        if (top - sy < V * 1.5 && top + h - sy > -V * 0.5) {
-          applyMotion(scenes[i], p);
-          revealBeats(scenes[i], p);
-        }
+        // reveal beats + motion only for near scenes (perf + will-change scoping)
+        var near = (top - sy < V * 1.5 && top + h - sy > -V * 0.5);
+        scenes[i].el.classList.toggle("live", near);
+        if (near) { applyMotion(scenes[i], p); revealBeats(scenes[i], p); }
       }
       active = act;
       // sky from active scene → next
@@ -336,34 +364,58 @@
       // now-plate land + return-now visibility
       $("nowLand").textContent = scenes[act].name;
       document.body.classList.toggle("at-end", act === scenes.length - 1);
+      var un = $("upNext");
+      if (un) {
+        var isLast = act >= scenes.length - 1;
+        un.hidden = isLast || !$("sheet").hidden;
+        if (!isLast) $("upNextName").textContent = scenes[act + 1].name;
+      }
       updateReturnNow();
     });
   }
 
+  // every layer parallaxes by depth, grows as you pass, then exits cleanly off-screen
   function applyMotion(scene, p) {
-    var b = scene.back, m = scene.motion, t = "translateX(-50%) ";
-    if (m === "zoom") t += "scale(" + (1 + p * 0.8).toFixed(3) + ") translateY(" + (-p * 6).toFixed(1) + "%)";
-    else if (m === "drift") t += "translateX(" + (-8 + p * 16).toFixed(1) + "%) scale(1.08)";
-    else if (m === "orbit") t = "translateX(-50%) rotate(" + (p * 6 - 3).toFixed(2) + "deg) scale(" + (1.04 + p * 0.06).toFixed(3) + ")";
-    else if (m === "sway") t += "translateX(" + (Math.sin(p * Math.PI * 2) * 4).toFixed(1) + "%) scale(1.05)";
-    else t += "scale(" + (1.04 + p * 0.04).toFixed(3) + ") translateY(" + (-p * 4).toFixed(1) + "%)";
-    b.style.transform = t;
-    b.style.opacity = clamp(1 - Math.abs(p - 0.5) * 0.5, 0.45, 1).toFixed(2);
+    var zoom = scene.motion === "zoom";
+    var twist = scene.motion === "sway" ? Math.sin(p * Math.PI * 2) * 2
+              : scene.motion === "orbit" ? (p * 4 - 2) : 0;
+    var layers = scene.back.querySelectorAll(".layer");
+    for (var i = 0; i < layers.length; i++) {
+      var L = layers[i];
+      var depth = parseFloat(L.dataset.depth) || 1;
+      var exit = L.dataset.exit || "fade";
+      var basex = L.dataset.basex || "-50%";
+      var grow = 1 + p * 0.20 * depth + (zoom ? p * 1.15 * depth : 0);
+      var ty = -p * 24 * depth;          // drift up as you progress (parallax by depth)
+      var tx = 0, op = 1;
+      var ex = clamp((p - 0.70) / 0.30, 0, 1);
+      if (ex > 0) {
+        if (exit === "left") tx = -160 * ex;
+        else if (exit === "right") tx = 160 * ex;
+        else if (exit === "up") { ty -= 130 * ex; op *= (1 - ex * 0.5); }
+        else { op *= (1 - ex); ty -= 18 * ex; }   // fade
+      }
+      L.style.transform = "translateX(calc(" + basex + " + " + tx.toFixed(1) + "%)) translateY(" + ty.toFixed(1) + "%) rotate(" + twist.toFixed(2) + "deg) scale(" + grow.toFixed(3) + ")";
+      L.style.opacity = op.toFixed(2);
+    }
   }
 
+  // beats fade AND grow to fill the screen as they become active, then recede
   function revealBeats(scene, p) {
     scene.beats.forEach(function (beat) {
-      var c = beat.center, span = beat.kind === "title" ? 0.26 : 0.22;
-      var enter = c - span * 0.95, full1 = c - span * 0.35, full2 = c + span * 0.5, exit = c + span * 1.0;
+      var c = beat.center, span = beat.kind === "title" ? 0.24 : 0.18;
+      var enter = c - span, full1 = c - span * 0.4, full2 = c + span * 0.45, exit = c + span;
       var op;
       if (p <= enter || p >= exit) op = 0;
       else if (p < full1) op = (p - enter) / (full1 - enter);
       else if (p > full2) op = 1 - (p - full2) / (exit - full2);
       else op = 1;
       op = clamp(op, 0, 1);
-      var ty = p < c ? (1 - op) * 42 : -(1 - op) * 30;
+      var ty = p < c ? (1 - op) * 46 : -(1 - op) * 34;
+      var scale = 0.9 + op * 0.16;       // 0.9 → 1.06: grows to fill as it arrives
       beat.el.style.opacity = op.toFixed(3);
-      beat.el.style.transform = "translateY(" + ty.toFixed(1) + "px)";
+      beat.el.style.transform = "translateY(" + ty.toFixed(1) + "px) scale(" + scale.toFixed(3) + ")";
+      beat.el.style.transformOrigin = beat.el.classList.contains("anchor-tr") || beat.el.classList.contains("anchor-mr") || beat.el.classList.contains("anchor-br") ? "right center" : "left center";
       beat.el.style.pointerEvents = op > 0.45 ? "auto" : "none";
     });
   }
@@ -382,6 +434,20 @@
   function scrollToScene(i, smooth) {
     var sec = scenes[i] && scenes[i].el; if (!sec) return;
     window.scrollTo({ top: sec.offsetTop + sec.offsetHeight * 0.18, behavior: smooth === false ? "auto" : "smooth" });
+  }
+  // crossfade jump: fade a curtain in, hop the scroll behind it, fade back out — never a long jarring scroll
+  function jumpTo(i) {
+    var sec = scenes[i] && scenes[i].el; if (!sec) return;
+    var target = sec.offsetTop + sec.offsetHeight * 0.18;
+    if (Math.abs(target - window.scrollY) < vh() * 0.9) { scrollToScene(i); return; } // close: just smooth-scroll
+    var curtain = $("curtain");
+    curtain.classList.add("show");
+    setTimeout(function () {
+      window.scrollTo(0, target - vh() * 0.12);          // land slightly above, so the fade-in shows a touch of travel
+      onScroll();
+      requestAnimationFrame(function () { window.scrollTo(0, target); onScroll(); });
+      setTimeout(function () { curtain.classList.remove("show"); }, 80);
+    }, 300);
   }
 
   /* ----------------------------------------------------------- ahead-of-schedule */
@@ -422,19 +488,19 @@
       cats.forEach(function (c) { html += '<div class="pass-stat">' + svg(c[2]) + '<span>' + c[1] + '</span><span class="n">' + (counts[c[0]] || 0) + "</span></div>"; });
       html += "</div></div>";
     });
-    html += '<p class="pass-foot">Tap a sign anywhere on the map to add a stamp. A kiss goodnight.</p>';
+    html += '<button class="pass-foot linkish" id="passMap">' + svg("map") + ' Back to the map</button>';
     el.innerHTML = html;
+    var pm = $("passMap"); if (pm) pm.addEventListener("click", function () { jumpTo(nowSceneIndex()); });
   }
 
   /* ----------------------------------------------------------- backdrops (fetch + inline) */
+  var svgCache = {};
   function loadBackdrops() {
-    document.querySelectorAll(".scene-backdrop[data-prop]").forEach(function (el) {
+    document.querySelectorAll(".layer[data-prop]").forEach(function (el) {
       var name = el.dataset.prop; if (!name) return;
-      fetch("assets/disney/" + name + ".svg").then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) { if (t) el.innerHTML = t; }).catch(function () {});
-    });
-    document.querySelectorAll(".ov-layer[data-prop]").forEach(function (el) {
-      var name = el.dataset.prop;
-      fetch("assets/disney/" + name + ".svg").then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) { if (t) el.innerHTML = t; }).catch(function () {});
+      if (svgCache[name]) { el.innerHTML = svgCache[name]; return; }
+      fetch("assets/disney/" + name + ".svg").then(function (r) { return r.ok ? r.text() : ""; })
+        .then(function (t) { if (t) { svgCache[name] = t; el.innerHTML = t; } }).catch(function () {});
     });
   }
 
@@ -481,10 +547,15 @@
       if (ms > 0 && ms < 16 * 3600000) timers.push(setTimeout(function () { fireAlert(it.title, it.body); }, ms));
     });
   }
+  function vqWash() {
+    var w = $("vqWash"); if (!w) return;
+    w.classList.remove("show"); void w.offsetWidth; w.classList.add("show");
+    setTimeout(function () { w.classList.remove("show"); }, 6200);
+  }
   function fireAlert(title, body) {
+    vqWash();                              // full-screen solid-color wash
     showToast(title + " — " + body);
     sound("chime");
-    if (fxOn()) for (var i = 0; i < 16; i++) (function (k) { setTimeout(function () { burst(innerWidth * (0.2 + Math.random() * 0.6), innerHeight * (0.2 + Math.random() * 0.3), "#ff5fa2", 1); }, k * 30); })(i);
     if (navigator.vibrate) try { navigator.vibrate([60, 40, 60]); } catch (e) {}
     if ("Notification" in window && Notification.permission === "granted") {
       try {
@@ -516,7 +587,7 @@
       var row = document.createElement("button"); row.className = "dir-row"; row.style.setProperty("--rc", zone.accent);
       var sceneIdx = scenes.findIndex(function (s) { return s.block === b; });
       row.innerHTML = '<span class="dr-time">' + esc(b.time) + '</span><span class="dr-name">' + esc(b.title) + '</span><span class="dr-done" data-block="' + b.id + '"></span>';
-      row.addEventListener("click", function () { closeOverlay("directory"); scrollToScene(sceneIdx); });
+      row.addEventListener("click", function () { closeOverlay("directory"); jumpTo(sceneIdx); });
       list.appendChild(row);
     });
     updateDirCounts();
@@ -567,6 +638,22 @@
     $("dedSync").innerHTML = "This is your party's <strong>shared map</strong>. Every stamp the four of you collect appears on all your phones, live — wander together, even when you split up. Time-sensitive reminders (like the World of Color queue) can buzz you in Settings.";
   }
 
+  // one-time intro: pick which guest holds this phone, then fade into "A Park Day"
+  function buildIntro() {
+    var wrap = $("introWho"); if (!wrap) return; wrap.innerHTML = "";
+    party.forEach(function (name, i) {
+      var b = document.createElement("button"); b.textContent = name;
+      b.addEventListener("click", function () {
+        mine = GKEYS[i]; localStorage.setItem("disney_me", mine);
+        try { localStorage.setItem("disney_intro", "1"); } catch (e) {}
+        var intro = $("intro"); intro.classList.add("gone");
+        window.scrollTo(0, 0);
+        setTimeout(function () { intro.hidden = true; onScroll(); }, 850);
+      });
+      wrap.appendChild(b);
+    });
+  }
+
   /* ----------------------------------------------------------- testing */
   var scrubbing = false;
   function initTesting() {
@@ -612,10 +699,11 @@
     // wiring
     $("dirBtn").addEventListener("click", function () { updateDirCounts(); openOverlay("directory"); });
     $("setBtn").addEventListener("click", function () { syncSettings(); openOverlay("settings"); });
-    $("dirSummary").addEventListener("click", function () { closeOverlay("directory"); scrollToScene(scenes.length - 1); });
+    $("dirSummary").addEventListener("click", function () { closeOverlay("directory"); jumpTo(scenes.length - 1); });
     $("navPrev").addEventListener("click", function () { scrollToScene(Math.max(0, active - 1)); });
     $("navNext").addEventListener("click", function () { scrollToScene(Math.min(scenes.length - 1, active + 1)); });
-    $("returnNow").addEventListener("click", function () { scrollToScene(nowSceneIndex()); });
+    $("returnNow").addEventListener("click", function () { jumpTo(nowSceneIndex()); });
+    $("upNext").addEventListener("click", function () { scrollToScene(Math.min(scenes.length - 1, active + 1)); });
     $("alertsToggle").addEventListener("click", requestAlerts);
     $("soundToggle").addEventListener("click", function () { soundOn = !soundOn; localStorage.setItem("disney_sound", soundOn ? "1" : "0"); if (soundOn) { audio(); sound("chime"); } syncSettings(); });
     $("fxToggle").addEventListener("click", function () { var off = document.body.classList.toggle("no-fx"); localStorage.setItem("disney_fx", off ? "0" : "1"); syncSettings(); });
@@ -640,7 +728,7 @@
 
     setTimeout(function () {
       onScroll();
-      if (!localStorage.getItem("disney_seen")) openOverlay("info");
+      if (!localStorage.getItem("disney_intro")) { window.scrollTo(0, 0); buildIntro(); $("intro").hidden = false; }
       else scrollToScene(nowSceneIndex(), false);
     }, 400);
   }

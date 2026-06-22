@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" fill="none">
+  <!-- PLACEHOLDER — the esplanade between the two parks (Park Hop). Replace, keep anim- names. -->
+  <!-- left gate (DL) -->
+  <rect x="60" y="180" width="150" height="320" fill="#5a6b8a"/>
+  <path d="M60 180 L135 120 L210 180 Z" fill="#46556f"/>
+  <!-- right gate (DCA) -->
+  <rect x="690" y="180" width="150" height="320" fill="#8a5a4a"/>
+  <path d="M690 180 L765 120 L840 180 Z" fill="#6f463a"/>
+  <!-- planter + path between -->
+  <ellipse cx="450" cy="470" rx="220" ry="40" fill="#3a6b3f"/>
+  <g id="anim-glow" fill="#ffe39c"><circle cx="135" cy="240" r="9"/><circle cx="765" cy="240" r="9"/></g>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <!-- PLACEHOLDER — Space Mountain. Replace, keep anim- names. -->
+  <g id="anim-star" fill="#fff"><circle cx="120" cy="90" r="3"/><circle cx="660" cy="70" r="4"/><circle cx="520" cy="120" r="3"/><circle cx="260" cy="60" r="3"/></g>
+  <!-- dome -->
+  <path d="M120 600 Q400 120 680 600 Z" fill="#dfe6f5"/>
+  <path d="M210 600 Q400 240 590 600 Z" fill="#c3cde6"/>
+  <!-- spires -->
+  <g fill="#aab6d8"><rect x="392" y="150" width="16" height="120"/><rect x="300" y="250" width="12" height="110"/><rect x="488" y="250" width="12" height="110"/></g>
+  <g id="anim-glow" fill="#7be0ff"><circle cx="400" cy="150" r="9"/><circle cx="306" cy="250" r="7"/><circle cx="494" cy="250" r="7"/></g>
+</svg>

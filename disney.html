@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Lobster+Two:ital,wght@0,400;0,700;1,700&family=Righteous&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="disney.css?v=4" />
+  <link rel="stylesheet" href="disney.css?v=7" />
 </head>
 <body>
   <!-- living sky (time of day) -->
@@ -44,6 +44,26 @@
   <button id="returnNow" class="return-now" hidden><span data-icon="pin"></span> Now</button>
   <div id="aheadBanner" class="ahead-banner" hidden></div>
   <div id="toast" class="toast" hidden></div>
+
+  <!-- bottom "up next" peek -->
+  <button id="upNext" class="up-next" hidden><span class="un-label">Up next</span><span id="upNextName" class="un-name"></span><span class="ic" data-icon="chevron-down"></span></button>
+
+  <!-- crossfade curtain for map jumps + intro -->
+  <div id="curtain" class="curtain" aria-hidden="true"></div>
+
+  <!-- full-screen VQ alert wash -->
+  <div id="vqWash" class="vq-wash" aria-hidden="true"><div class="vq-wash-inner"><span class="vq-kicker">Right now</span><span class="vq-title">World of Color — Virtual Queue is OPEN</span><span class="vq-sub">All four tickets in the app. Book the second show.</span></div></div>
+
+  <!-- one-time intro splash -->
+  <div id="intro" class="intro" hidden>
+    <div class="intro-inner">
+      <p class="intro-kicker">A shared map for</p>
+      <h1 class="intro-title">A Park Day</h1>
+      <p class="intro-sub">Disneyland Resort &middot; July 17, 2026</p>
+      <p class="intro-who">Who's holding this phone?</p>
+      <div id="introWho" class="intro-who-row"></div>
+    </div>
+  </div>
 
   <!-- attraction detail sheet (expand / collapse) -->
   <div id="sheet" class="sheet" hidden>
@@ -143,7 +163,7 @@
       }
     })();
   </script>
-  <script src="disney-data.js?v=4"></script>
-  <script src="disney.js?v=4"></script>
+  <script src="disney-data.js?v=7"></script>
+  <script src="disney.js?v=7"></script>
 </body>
 </html>
