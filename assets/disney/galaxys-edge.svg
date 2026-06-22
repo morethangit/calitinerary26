@@ -1,23 +1,42 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" fill="none">
-  <!-- PLACEHOLDER prop — replace, keep anim- names. -->
-  <!-- spires -->
-  <g fill="#3a4654">
-    <path d="M120 600 L150 220 L180 600 Z"/>
-    <path d="M760 600 L735 280 L800 600 Z"/>
-    <rect x="60" y="360" width="70" height="240"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 760" fill="none">
+  <!-- Galaxy's Edge / Black Spire Outpost. Taller composition so it covers more of
+       the scene. Placeholder — replace, keep anim- group names. -->
+  <!-- the black spires reaching high -->
+  <g fill="#2c3a47">
+    <path d="M60 760 L110 70 L160 760 Z"/>
+    <path d="M690 760 L740 140 L790 760 Z"/>
+    <path d="M250 760 L286 300 L322 760 Z"/>
   </g>
-  <!-- millennium falcon-ish disc -->
+  <!-- outpost structures -->
+  <g fill="#5b6168">
+    <path d="M120 760 L120 470 L262 430 L262 760 Z"/>
+    <path d="M558 760 L558 450 L720 482 L720 760 Z"/>
+    <rect x="360" y="520" width="120" height="240"/>
+  </g>
+  <g fill="#41474d">
+    <rect x="150" y="520" width="80" height="240"/>
+    <rect x="600" y="544" width="80" height="216"/>
+  </g>
+  <!-- the Falcon, parked dead center -->
   <g>
-    <ellipse cx="470" cy="420" rx="200" ry="62" fill="#9aa7b4"/>
-    <ellipse cx="470" cy="408" rx="120" ry="42" fill="#b8c4d0"/>
-    <circle cx="470" cy="404" r="28" fill="#7d8a98"/>
+    <ellipse cx="410" cy="470" rx="222" ry="66" fill="#aab6c2"/>
+    <ellipse cx="410" cy="452" rx="134" ry="46" fill="#c6d2dc"/>
+    <rect x="600" y="446" width="86" height="22" rx="11" fill="#aab6c2"/>
+    <circle cx="410" cy="448" r="30" fill="#7c8a98"/>
   </g>
   <!-- blinking lights -->
   <g id="anim-lights" fill="#7be0ff">
-    <circle cx="330" cy="430" r="7"/><circle cx="610" cy="430" r="7"/><circle cx="470" cy="455" r="7"/>
+    <circle cx="250" cy="486" r="8"/><circle cx="560" cy="486" r="8"/><circle cx="410" cy="514" r="8"/>
+    <circle cx="110" cy="430" r="6"/><circle cx="742" cy="470" r="6"/>
+  </g>
+  <!-- warm window glow -->
+  <g id="anim-glow" fill="#ffd58a">
+    <rect x="168" y="560" width="22" height="42" rx="6"/><rect x="206" y="560" width="22" height="42" rx="6"/>
+    <rect x="618" y="582" width="22" height="40" rx="6"/>
+    <rect x="392" y="560" width="22" height="44" rx="6"/><rect x="430" y="560" width="22" height="44" rx="6"/>
   </g>
   <!-- steam -->
   <g id="anim-steam" fill="#cfe6ee" opacity="0.5">
-    <circle cx="210" cy="500" r="26"/><circle cx="250" cy="470" r="20"/>
+    <circle cx="320" cy="600" r="26"/><circle cx="356" cy="566" r="20"/>
   </g>
 </svg>

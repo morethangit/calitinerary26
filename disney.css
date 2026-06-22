@@ -76,6 +76,17 @@ body { -webkit-font-smoothing: antialiased; }
 .scene-backdrop .layer svg { width: 100%; height: auto; display: block;
   -webkit-mask-image: linear-gradient(180deg, #000 78%, transparent 100%);
   mask-image: linear-gradient(180deg, #000 78%, transparent 100%); }
+/* foreground landmark: fills the lower screen, bottom-anchored, aspect-contained
+   (preserveAspectRatio xMidYMax is set on the svg in JS) so every prop — tall or
+   wide — stands on the ground and covers a consistent slice of the view. */
+.scene-backdrop .layer.fg { width: min(150vw, 760px); height: 94vh; bottom: 0; top: auto;
+  transform-origin: 50% 100%; }
+.scene-backdrop .layer.fg svg { width: 100%; height: 100%; }
+/* the two Main Street rows: tall, hug their outer edge, slide past as you walk in */
+.scene-backdrop .layer.street { width: auto; height: 100vh; bottom: 0; top: auto; }
+.scene-backdrop .layer.street.street-l { left: 0; transform-origin: 0% 100%; }
+.scene-backdrop .layer.street.street-r { left: auto; right: 0; transform-origin: 100% 100%; }
+.scene-backdrop .layer.street svg { width: auto; height: 100%; }
 /* distant procedural horizon (the back parallax piece, tinted per land) */
 .scene-backdrop .layer.bg { left: 50%; bottom: -6%; width: 210%; height: 50%;
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
@@ -89,16 +100,12 @@ body { -webkit-font-smoothing: antialiased; }
 .scene-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 38%;
   background: linear-gradient(180deg, transparent, rgba(20,14,40,.0)); pointer-events: none; }
 
-/* a "beat" — a unit of information revealed by scroll. Positioned, not centered. */
-.beat { position: absolute; width: min(86vw, 460px); opacity: 0; }
+/* a "beat" — a unit of information revealed by scroll. One at a time, in a fixed
+   slot beneath the header, so info always reads as "under the title" and never
+   overlaps the next beat. */
+.beat { position: absolute; left: 50%; top: 56%; width: min(86vw, 460px); opacity: 0;
+  transform: translate(-50%, -50%); }
 .scene.live .beat, .scene.live .scene-title { will-change: opacity, transform; }
-.beat.anchor-tl { left: 6%;  top: 16%; }
-.beat.anchor-tr { right: 6%; top: 20%; text-align: right; }
-.beat.anchor-ml { left: 6%;  top: 40%; }
-.beat.anchor-mr { right: 6%; top: 44%; text-align: right; }
-.beat.anchor-bl { left: 6%;  bottom: 16%; }
-.beat.anchor-br { right: 6%; bottom: 18%; text-align: right; }
-.beat.anchor-cl { left: 8%;  top: 52%; }
 
 /* scene title — big type, no box. Sits on the sky. */
 .scene-title { position: absolute; left: 7%; right: 7%; top: 14%; opacity: 0; }

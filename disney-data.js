@@ -54,11 +54,18 @@ window.DISNEY_DAY = {
     },
     /* direction each land's foreground prop exits as you leave it (no hard edges) */
     exit: {
-      "rope-drop": "left", "morning-sweep": "right", "new-orleans": "left",
+      "rope-drop": "left", "morning-sweep": "up", "new-orleans": "left",
       "woc-vq": "fade", "lunch": "right", "galaxys-edge": "left",
       "hop-dca": "up", "dca-sweep": "right", "dinner": "left",
       "wind-down": "right", "woc-position": "fade", "world-of-color": "up",
       "hop-back": "left", "night-session": "fade",
+    },
+    /* how far into a scene the main prop holds before it exits (0–1; default .80). */
+    leave: { "morning-sweep": 0.42 },
+    /* a second prop that emerges as the first one clears (enter/leave are scene
+       progress 0–1). Space Mountain lifts off, the Matterhorn rises behind it. */
+    landmark2: {
+      "morning-sweep": { prop: "matterhorn", enter: 0.40, leave: 0.84, exit: "left", depth: 1 },
     },
     /* lands that get a slow orbiting decoration the viewport passes */
     orbit: ["morning-sweep", "galaxys-edge", "wind-down"],

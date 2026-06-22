@@ -1,12 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" fill="none">
-  <!-- PLACEHOLDER — the esplanade between the two parks (Park Hop). Replace, keep anim- names. -->
-  <!-- left gate (DL) -->
-  <rect x="60" y="180" width="150" height="320" fill="#5a6b8a"/>
-  <path d="M60 180 L135 120 L210 180 Z" fill="#46556f"/>
-  <!-- right gate (DCA) -->
-  <rect x="690" y="180" width="150" height="320" fill="#8a5a4a"/>
-  <path d="M690 180 L765 120 L840 180 Z" fill="#6f463a"/>
-  <!-- planter + path between -->
-  <ellipse cx="450" cy="470" rx="220" ry="40" fill="#3a6b3f"/>
-  <g id="anim-glow" fill="#ffe39c"><circle cx="135" cy="240" r="9"/><circle cx="765" cy="240" r="9"/></g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 680" fill="none">
+  <!-- The esplanade between the two parks (Park Hop). Taller so it fills the scene;
+       exits upward as you cross over. Placeholder — replace, keep anim- names. -->
+  <!-- left gate tower (Disneyland) -->
+  <g fill="#5a6b8a">
+    <rect x="70" y="170" width="170" height="510"/>
+    <rect x="46" y="138" width="218" height="40"/>
+  </g>
+  <path d="M46 138 L155 56 L264 138 Z" fill="#46556f"/>
+  <rect x="128" y="270" width="54" height="410" fill="#3c4a64"/>
+  <g fill="#7d8ca8"><rect x="92" y="220" width="40" height="60" rx="8"/><rect x="178" y="220" width="40" height="60" rx="8"/></g>
+  <!-- right gate tower (California Adventure) -->
+  <g fill="#9a6450">
+    <rect x="580" y="170" width="170" height="510"/>
+    <rect x="556" y="138" width="218" height="40"/>
+  </g>
+  <path d="M556 138 L665 56 L774 138 Z" fill="#7a4d3e"/>
+  <rect x="638" y="270" width="54" height="410" fill="#603c30"/>
+  <g fill="#b98a72"><rect x="602" y="220" width="40" height="60" rx="8"/><rect x="688" y="220" width="40" height="60" rx="8"/></g>
+  <!-- central roundabout / floral planter -->
+  <ellipse cx="410" cy="600" rx="250" ry="56" fill="#3a6b3f"/>
+  <ellipse cx="410" cy="586" rx="150" ry="34" fill="#4a824f"/>
+  <rect x="388" y="430" width="44" height="150" fill="#6b4a2f"/>
+  <circle cx="410" cy="430" r="64" fill="#4a824f"/>
+  <circle cx="410" cy="430" r="38" fill="#5b9760"/>
+  <!-- banners -->
+  <g id="anim-flag" fill="#ffd24a">
+    <path d="M155 56 L155 20 L210 36 L155 52 Z"/>
+    <path d="M665 56 L665 20 L720 36 L665 52 Z"/>
+  </g>
+  <!-- lamp glow -->
+  <g id="anim-glow" fill="#ffe39c">
+    <circle cx="100" cy="320" r="11"/><circle cx="210" cy="320" r="11"/>
+    <circle cx="610" cy="320" r="11"/><circle cx="720" cy="320" r="11"/>
+  </g>
 </svg>

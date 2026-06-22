@@ -129,8 +129,8 @@
     var sec = document.createElement("section");
     sec.className = "scene" + (opts.future ? " future" : "");
     sec.dataset.id = opts.id;
-    var beatsCount = opts.beats || 3;
-    var vhH = clamp(150 + beatsCount * 34, 185, 260);
+    var beatsCount = opts.beats || 1;       // info beats (notes + stops), excludes the title
+    var vhH = clamp(215 + beatsCount * 66, 250, 500);   // taller scenes = each beat owns more scroll = gentler flow
     sec.style.height = vhH + "vh";
     var stage = document.createElement("div"); stage.className = "stage";
     var back = document.createElement("div"); back.className = "scene-backdrop"; back.dataset.motion = opts.motion || "drift";
@@ -154,6 +154,9 @@
     d.dataset.depth = opts.depth != null ? opts.depth : 1;
     d.dataset.exit = opts.exit || "fade";
     d.dataset.basex = opts.basex || "-50%";
+    if (opts.role) d.dataset.role = opts.role;
+    if (opts.enter != null) d.dataset.enter = opts.enter;
+    if (opts.leave != null) d.dataset.leave = opts.leave;
     if (opts.css) d.style.cssText = opts.css;
     if (opts.prop) d.dataset.prop = opts.prop;
     if (opts.html) d.innerHTML = opts.html;
@@ -162,14 +165,16 @@
   }
 
   function buildOverture() {
-    var sh = sceneShell({ id: "overture", motion: "zoom", beats: 3 });
+    var sh = sceneShell({ id: "overture", motion: "walk", beats: 1 });
     var comp = sh.back;
-    // distant horizon, then the castle, the station, and the parting buildings
+    // A walk down Main Street, like standing on a turning cylinder: the station
+    // tunnel lifts overhead, the building rows slide off either side, and the
+    // castle grows up out of the center distance from behind them.
     addLayer(comp, { klass: "bg", depth: 0.3, exit: "fade" });
-    addLayer(comp, { klass: "fg", prop: "castle", depth: 0.55, exit: "left", css: "left:50%;bottom:30%;width:34%" });
-    addLayer(comp, { klass: "fg", prop: "train-station", depth: 0.7, exit: "up", css: "left:50%;bottom:18%;width:62%" });
-    addLayer(comp, { klass: "fg", prop: "mainstreet-left", depth: 0.95, exit: "left", basex: "0", css: "left:0;bottom:0;width:48%" });
-    addLayer(comp, { klass: "fg", prop: "mainstreet-right", depth: 0.95, exit: "right", basex: "0", css: "right:0;bottom:0;width:48%" });
+    addLayer(comp, { klass: "fg walk-castle", role: "walk-castle", depth: 0.5, prop: "castle" });
+    addLayer(comp, { klass: "fg tunnel", role: "tunnel", depth: 0.9, prop: "train-station" });
+    addLayer(comp, { klass: "fg street street-l", role: "street-left", basex: "0%", prop: "mainstreet-left" });
+    addLayer(comp, { klass: "fg street street-r", role: "street-right", basex: "0%", prop: "mainstreet-right" });
     var stage = sh.stage;
     var title = document.createElement("div");
     title.className = "scene-title";
@@ -179,10 +184,10 @@
       '<p class="scene-sub">"Here you leave today and enter the world of yesterday, tomorrow and fantasy."</p>';
     stage.appendChild(title);
     var cue = document.createElement("div");
-    cue.className = "beat anchor-bl"; cue.dataset.center = "0.55";
+    cue.className = "beat";
     cue.innerHTML = '<p class="whisper">Scroll to walk into the park. Tap any sign to open it; tap away to close.</p>';
     stage.appendChild(cue);
-    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "overture", phase: "dawn", name: "Main Street", motion: "zoom", beats: [{ el: title, center: 0.12, kind: "title" }, { el: cue, center: 0.55, kind: "whisper" }] });
+    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "overture", phase: "dawn", name: "Main Street", motion: "walk", beats: [{ el: title, kind: "title" }, { el: cue, kind: "whisper", idx: 0, n: 1 }] });
   }
 
   function buildScene(block) {
@@ -192,14 +197,20 @@
     var future = fontKey === "righteous";
     var stops = (block.quests || []);
     var notes = (block.notes || []);
-    var beatN = 1 + stops.length + notes.length;
+    var beatN = stops.length + notes.length;
     var sh = sceneShell({ id: block.id, motion: motion, beats: beatN, future: future });
     sh.sec.style.setProperty("--zone", zone.accent);
-    // layered backdrop: distant horizon (bg) + optional orbit + foreground landmark
+    // layered backdrop: distant horizon (bg) + optional orbit + foreground landmark(s)
     addLayer(sh.back, { klass: "bg", depth: 0.32, exit: "fade" });
     if ((M.orbit || []).indexOf(block.id) >= 0)
-      addLayer(sh.back, { klass: "orbit", depth: 0.7, exit: "up", html: ORBIT_SVG, css: "left:50%;top:13%;bottom:auto;width:118px" });
-    addLayer(sh.back, { klass: "fg", depth: 1, exit: (M.exit && M.exit[block.id]) || "fade", prop: M.landmarks[block.id] || "" });
+      addLayer(sh.back, { klass: "orbit", depth: 0.7, exit: "up", html: ORBIT_SVG, css: "left:50%;top:11%;bottom:auto;width:118px" });
+    addLayer(sh.back, { klass: "fg", depth: 1, exit: (M.exit && M.exit[block.id]) || "fade",
+      leave: (M.leave && M.leave[block.id]), prop: M.landmarks[block.id] || "" });
+    // a second landmark that emerges as the first one clears (e.g. Matterhorn after Space Mountain)
+    if (M.landmark2 && M.landmark2[block.id]) {
+      var l2 = M.landmark2[block.id];
+      addLayer(sh.back, { klass: "fg", depth: l2.depth || 1, exit: l2.exit || "fade", enter: l2.enter, leave: l2.leave, prop: l2.prop });
+    }
     var stage = sh.stage;
 
     // title beat
@@ -211,26 +222,24 @@
       '<h1 class="scene-name ' + nameCls + '">' + esc(block.title) + "</h1>" +
       (block.subtitle ? '<p class="scene-sub">' + esc(block.subtitle) + "</p>" : "");
     stage.appendChild(title);
-    var beats = [{ el: title, center: 0.12, kind: "title" }];
+    var beats = [{ el: title, kind: "title" }];
 
-    // notes + stops as beats; anchors descend the screen as you scroll (spatial = reveal order)
-    var anchors = ["anchor-ml", "anchor-mr", "anchor-cl", "anchor-bl", "anchor-br", "anchor-tr"];
+    // notes + stops revealed one at a time in a single slot beneath the header,
+    // each owning an equal slice of the scene's scroll (no overlap, info under header)
     var seq = [];
     notes.forEach(function (n) { seq.push({ kind: "note", note: n }); });
     stops.forEach(function (q) { seq.push({ kind: "stop", q: q }); });
     var N = seq.length;
     seq.forEach(function (item, i) {
-      var center = N ? clamp(0.30 + (i + 0.5) / N * 0.64, 0, 1) : 0.5;
       var beat = document.createElement("div");
-      beat.className = "beat " + anchors[i % anchors.length];
-      beat.dataset.center = center;
+      beat.className = "beat";
       if (item.kind === "note") {
         beat.innerHTML = '<p class="whisper">' + esc(item.note) + "</p>";
       } else {
         beat.appendChild(buildSign(item.q, block, i % 2 === 1));
       }
       stage.appendChild(beat);
-      beats.push({ el: beat, center: center, kind: item.kind, id: item.kind === "stop" ? item.q.id : null });
+      beats.push({ el: beat, kind: item.kind, idx: i, n: N, id: item.kind === "stop" ? item.q.id : null });
     });
 
     scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "block", block: block, phase: M.sky[block.id] || "midday", name: block.title, fontKey: fontKey, motion: motion, beats: beats });
@@ -374,49 +383,85 @@
     });
   }
 
-  // every layer parallaxes by depth, grows as you pass, then exits cleanly off-screen
+  // every layer parallaxes by depth, grows as you pass, then exits cleanly off-screen.
+  // overture layers (data-role) follow a bespoke "walk down Main Street" path.
   function applyMotion(scene, p) {
-    var zoom = scene.motion === "zoom";
-    var twist = scene.motion === "sway" ? Math.sin(p * Math.PI * 2) * 2
-              : scene.motion === "orbit" ? (p * 4 - 2) : 0;
     var layers = scene.back.querySelectorAll(".layer");
     for (var i = 0; i < layers.length; i++) {
       var L = layers[i];
+      var role = L.dataset.role;
       var depth = parseFloat(L.dataset.depth) || 1;
-      var exit = L.dataset.exit || "fade";
       var basex = L.dataset.basex || "-50%";
-      var grow = 1 + p * 0.20 * depth + (zoom ? p * 1.15 * depth : 0);
-      var ty = -p * 24 * depth;          // drift up as you progress (parallax by depth)
-      var tx = 0, op = 1;
-      var ex = clamp((p - 0.70) / 0.30, 0, 1);
-      if (ex > 0) {
-        if (exit === "left") tx = -160 * ex;
-        else if (exit === "right") tx = 160 * ex;
-        else if (exit === "up") { ty -= 130 * ex; op *= (1 - ex * 0.5); }
-        else { op *= (1 - ex); ty -= 18 * ex; }   // fade
+      var tx = 0, ty = 0, scale = 1, op = 1, rot = 0;
+      if (role === "walk-castle") {
+        scale = 0.55 + p * 1.25;             // grows up out of the distance
+        ty = -p * 4;
+        op = 1;                              // sits behind the rows, revealed as they part
+      } else if (role === "tunnel") {
+        scale = 1.12 + p * 0.85;
+        ty = -p * 155;                       // you pass up under the station
+        op = clamp(1 - (p - 0.14) / 0.18, 0, 1);
+      } else if (role === "street-left" || role === "street-right") {
+        var dir = role === "street-right" ? 1 : -1;
+        scale = 1 + p * 1.05;
+        tx = dir * p * 92;                   // each row slides off its own side as you walk
+        ty = -p * 6;
+        op = clamp(1 - (p - 0.82) / 0.18, 0, 1);
+      } else {
+        var zoom = scene.motion === "zoom";
+        rot = scene.motion === "sway" ? Math.sin(p * Math.PI * 2) * 2
+            : scene.motion === "orbit" ? (p * 4 - 2) : 0;
+        var enter = parseFloat(L.dataset.enter) || 0;
+        var leave = L.dataset.leave != null ? parseFloat(L.dataset.leave) : 0.80;
+        var q = Math.max(0, p - enter);
+        scale = 1 + q * 0.26 * depth + (zoom ? q * 0.7 * depth : 0);
+        ty = -q * 12 * depth;                // gentle continuous parallax rise
+        op = enter > 0 ? clamp((p - enter) / 0.12, 0, 1) : 1;
+        var ex = clamp((p - leave) / Math.max(0.001, 1 - leave), 0, 1);   // exit only in the tail
+        if (ex > 0) {
+          var exit = L.dataset.exit || "fade";
+          if (exit === "left") tx = -150 * ex;
+          else if (exit === "right") tx = 150 * ex;
+          else if (exit === "up") { ty -= 120 * ex; op *= (1 - ex * 0.5); }
+          else { op *= (1 - ex); ty -= 12 * ex; }
+        }
       }
-      L.style.transform = "translateX(calc(" + basex + " + " + tx.toFixed(1) + "%)) translateY(" + ty.toFixed(1) + "%) rotate(" + twist.toFixed(2) + "deg) scale(" + grow.toFixed(3) + ")";
+      L.style.transform = "translateX(calc(" + basex + " + " + tx.toFixed(1) + "%)) translateY(" + ty.toFixed(1) + "%) rotate(" + rot.toFixed(2) + "deg) scale(" + scale.toFixed(3) + ")";
       L.style.opacity = op.toFixed(2);
     }
   }
 
-  // beats fade AND grow to fill the screen as they become active, then recede
+  // The header holds for the whole scene; info beats reveal one at a time below it.
+  var INFO_START = 0.14, INFO_END = 0.90;
   function revealBeats(scene, p) {
     scene.beats.forEach(function (beat) {
-      var c = beat.center, span = beat.kind === "title" ? 0.24 : 0.18;
-      var enter = c - span, full1 = c - span * 0.4, full2 = c + span * 0.45, exit = c + span;
-      var op;
-      if (p <= enter || p >= exit) op = 0;
-      else if (p < full1) op = (p - enter) / (full1 - enter);
-      else if (p > full2) op = 1 - (p - full2) / (exit - full2);
-      else op = 1;
-      op = clamp(op, 0, 1);
-      var ty = p < c ? (1 - op) * 46 : -(1 - op) * 34;
-      var scale = 0.9 + op * 0.16;       // 0.9 → 1.06: grows to fill as it arrives
-      beat.el.style.opacity = op.toFixed(3);
-      beat.el.style.transform = "translateY(" + ty.toFixed(1) + "px) scale(" + scale.toFixed(3) + ")";
-      beat.el.style.transformOrigin = beat.el.classList.contains("anchor-tr") || beat.el.classList.contains("anchor-mr") || beat.el.classList.contains("anchor-br") ? "right center" : "left center";
-      beat.el.style.pointerEvents = op > 0.45 ? "auto" : "none";
+      if (beat.kind === "title") {
+        // the header is present the whole scene; it only steps aside at the very end
+        // as the next scene's header takes over (the now-plate always shows the land too)
+        var op = p > 0.88 ? clamp(1 - (p - 0.88) / 0.12, 0, 1) : 1;
+        var tty = (1 - op) * -18;
+        beat.el.style.opacity = op.toFixed(3);
+        beat.el.style.transform = "translateY(" + tty.toFixed(1) + "px)";
+        beat.el.style.pointerEvents = op > 0.5 ? "auto" : "none";
+        return;
+      }
+      var n = beat.n || 1, idx = beat.idx || 0;
+      var step = (INFO_END - INFO_START) / n;
+      var c = INFO_START + step * (idx + 0.5);
+      // narrow fade windows so only one beat dominates the slot at a time; the small
+      // remaining overlap is a quick cross-fade with the two beats pushed apart
+      var inA = c - step * 0.54, inB = c - step * 0.16, outA = c + step * 0.16, outB = c + step * 0.54;
+      var bop;
+      if (p <= inA || p >= outB) bop = 0;
+      else if (p < inB) bop = (p - inA) / (inB - inA);
+      else if (p > outA) bop = 1 - (p - outA) / (outB - outA);
+      else bop = 1;
+      bop = clamp(bop, 0, 1);
+      var ty = p < c ? (1 - bop) * 44 : -(1 - bop) * 40;
+      var scale = 0.95 + bop * 0.06;
+      beat.el.style.opacity = bop.toFixed(3);
+      beat.el.style.transform = "translate(-50%, calc(-50% + " + ty.toFixed(1) + "px)) scale(" + scale.toFixed(3) + ")";
+      beat.el.style.pointerEvents = bop > 0.45 ? "auto" : "none";
     });
   }
 
@@ -495,12 +540,20 @@
 
   /* ----------------------------------------------------------- backdrops (fetch + inline) */
   var svgCache = {};
+  // bottom-anchor each prop so it stands on the ground regardless of aspect ratio;
+  // the two Main Street rows anchor to their outer edge so they hug the sides.
+  function setPA(el) {
+    var s = el.querySelector("svg"); if (!s) return;
+    var pa = el.classList.contains("street-l") ? "xMinYMax meet"
+           : el.classList.contains("street-r") ? "xMaxYMax meet" : "xMidYMax meet";
+    s.setAttribute("preserveAspectRatio", pa);
+  }
   function loadBackdrops() {
     document.querySelectorAll(".layer[data-prop]").forEach(function (el) {
       var name = el.dataset.prop; if (!name) return;
-      if (svgCache[name]) { el.innerHTML = svgCache[name]; return; }
-      fetch("assets/disney/" + name + ".svg").then(function (r) { return r.ok ? r.text() : ""; })
-        .then(function (t) { if (t) { svgCache[name] = t; el.innerHTML = t; } }).catch(function () {});
+      if (svgCache[name]) { el.innerHTML = svgCache[name]; setPA(el); return; }
+      fetch("assets/disney/" + name + ".svg?v=10").then(function (r) { return r.ok ? r.text() : ""; })
+        .then(function (t) { if (t) { svgCache[name] = t; el.innerHTML = t; setPA(el); } }).catch(function () {});
     });
   }
 
