@@ -71,11 +71,11 @@ body { -webkit-font-smoothing: antialiased; }
 .stage { position: sticky; top: 0; height: 100dvh; overflow: hidden; }
 .scene-backdrop { position: absolute; inset: 0; pointer-events: none; }
 .scene-backdrop .layer { position: absolute; left: 50%; bottom: 0; width: min(150vw, 1100px);
-  transform: translateX(-50%); transform-origin: 50% 85%; }
+  transform: translateX(-50%); transform-origin: 50% 85%; contain: layout paint; }
 .scene.live .scene-backdrop .layer { will-change: transform, opacity; }
 /* props are drawn extra-wide to cover any screen; fade the left/right AND bottom edges
    (two gradients intersected) so a cropped edge never shows a hard line. */
-.scene-backdrop .layer svg { width: 100%; height: auto; display: block;
+.scene-backdrop .layer svg, .scene-backdrop .layer img { width: 100%; height: auto; display: block;
   -webkit-mask-image:
     linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%),
     linear-gradient(180deg, #000 80%, transparent 100%);
@@ -85,25 +85,25 @@ body { -webkit-font-smoothing: antialiased; }
     linear-gradient(180deg, #000 80%, transparent 100%);
   mask-composite: intersect; }
 /* foreground landmark: fills the lower screen, bottom-anchored, aspect-contained
-   (preserveAspectRatio xMidYMax is set on the svg in JS) so every prop — tall or
-   wide — stands on the ground and covers a consistent slice of the view. */
+   (preserveAspectRatio xMidYMax is set on the svg in JS, object-fit/position on img)
+   so every prop — tall or wide — stands on the ground and covers a consistent slice
+   of the view. */
 .scene-backdrop .layer.fg { width: min(150vw, 760px); height: 94vh; bottom: 0; top: auto;
   transform-origin: 50% 100%; }
-.scene-backdrop .layer.fg svg { width: 100%; height: 100%; }
+.scene-backdrop .layer.fg svg, .scene-backdrop .layer.fg img { width: 100%; height: 100%; }
+.scene-backdrop .layer.fg img { object-fit: contain; }
 /* the opening Disneyland logo (overture) — centered, no edge mask */
 .scene-backdrop .layer.logo { transform-origin: 50% 50%; }
 .scene-backdrop .layer.logo svg { width: 100%; height: auto;
-  -webkit-mask-image: none; mask-image: none;
-  filter: drop-shadow(0 6px 18px rgba(20,12,40,.4)); }
+  -webkit-mask-image: none; mask-image: none; }
 /* distant procedural horizon (the back parallax piece, tinted per land) */
 .scene-backdrop .layer.bg { left: 50%; bottom: -6%; width: 210%; height: 50%;
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-  background: radial-gradient(120% 100% at 50% 100%, color-mix(in srgb, var(--zone) 65%, transparent), transparent 72%);
-  filter: blur(3px); }
+  background: radial-gradient(120% 100% at 50% 100%, color-mix(in srgb, var(--zone) 65%, transparent), transparent 72%); }
 /* slowly orbiting decoration the viewport passes */
 .scene-backdrop .layer.orbit { width: 118px; }
 .orbit-spin { width: 100%; animation: spin 36s linear infinite; }
-.orbit-spin svg { -webkit-mask-image: none; mask-image: none; filter: drop-shadow(0 0 10px rgba(255,216,107,.5)); }
+.orbit-spin svg { -webkit-mask-image: none; mask-image: none; }
 @media (prefers-reduced-motion: reduce) { .orbit-spin { animation: none; } }
 .scene-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 38%;
   background: linear-gradient(180deg, transparent, rgba(20,14,40,.0)); pointer-events: none; }
@@ -112,7 +112,7 @@ body { -webkit-font-smoothing: antialiased; }
    slot beneath the header, so info always reads as "under the title" and never
    overlaps the next beat. */
 .beat { position: absolute; left: 50%; top: 56%; width: min(86vw, 460px); opacity: 0;
-  transform: translate(-50%, -50%); }
+  transform: translate(-50%, -50%); contain: layout style; }
 .scene.live .beat, .scene.live .scene-title { will-change: opacity, transform; }
 
 /* scene title — big type, no box. Sits on the sky. */

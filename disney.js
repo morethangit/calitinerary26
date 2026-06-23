@@ -177,8 +177,10 @@
     var comp = sh.back;
     // The opening: a Disneyland logo over the dawn sky. As you scroll it lifts and
     // fades, and you descend into Rope Drop where the castle is revealed (once).
-    addLayer(comp, { klass: "bg", depth: 0.3, exit: "fade" });
-    addLayer(comp, { klass: "logo", role: "logo", prop: "disneyland-logo", css: "left:50%;top:30%;bottom:auto;width:min(82vw,520px);transform-origin:50% 50%" });
+    var layers = [
+      addLayer(comp, { klass: "bg", depth: 0.3, exit: "fade" }),
+      addLayer(comp, { klass: "logo", role: "logo", prop: "disneyland-logo", css: "left:50%;top:30%;bottom:auto;width:min(82vw,520px);transform-origin:50% 50%" })
+    ];
     var stage = sh.stage;
     var title = document.createElement("div");
     title.className = "scene-title";
@@ -191,7 +193,7 @@
     cue.className = "beat";
     cue.innerHTML = '<p class="whisper">Scroll to walk into the park. Tap any sign to open it; tap away to close.</p>';
     stage.appendChild(cue);
-    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "overture", phase: "dawn", name: "Main Street", motion: "logo", beats: [{ el: title, kind: "title" }, { el: cue, kind: "whisper", idx: 0, n: 1 }] });
+    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "overture", phase: "dawn", name: "Main Street", motion: "logo", beats: [{ el: title, kind: "title" }, { el: cue, kind: "whisper", idx: 0, n: 1 }], layers: layers });
   }
 
   function buildScene(block) {
@@ -205,15 +207,16 @@
     var sh = sceneShell({ id: block.id, motion: motion, beats: beatN, future: future });
     sh.sec.style.setProperty("--zone", zone.accent);
     // layered backdrop: distant horizon (bg) + optional orbit + foreground landmark(s)
-    addLayer(sh.back, { klass: "bg", depth: 0.32, exit: "fade" });
+    var layers = [];
+    layers.push(addLayer(sh.back, { klass: "bg", depth: 0.32, exit: "fade" }));
     if ((M.orbit || []).indexOf(block.id) >= 0)
-      addLayer(sh.back, { klass: "orbit", depth: 0.7, exit: "up", html: ORBIT_SVG, css: "left:50%;top:11%;bottom:auto;width:118px" });
-    addLayer(sh.back, { klass: "fg", depth: 1, exit: (M.exit && M.exit[block.id]) || "fade",
-      leave: (M.leave && M.leave[block.id]), prop: M.landmarks[block.id] || "" });
+      layers.push(addLayer(sh.back, { klass: "orbit", depth: 0.7, exit: "up", html: ORBIT_SVG, css: "left:50%;top:11%;bottom:auto;width:118px" }));
+    layers.push(addLayer(sh.back, { klass: "fg", depth: 1, exit: (M.exit && M.exit[block.id]) || "fade",
+      leave: (M.leave && M.leave[block.id]), prop: M.landmarks[block.id] || "" }));
     // a second landmark that emerges as the first one clears (e.g. Matterhorn after Space Mountain)
     if (M.landmark2 && M.landmark2[block.id]) {
       var l2 = M.landmark2[block.id];
-      addLayer(sh.back, { klass: "fg", depth: l2.depth || 1, exit: l2.exit || "fade", enter: l2.enter, leave: l2.leave, prop: l2.prop });
+      layers.push(addLayer(sh.back, { klass: "fg", depth: l2.depth || 1, exit: l2.exit || "fade", enter: l2.enter, leave: l2.leave, prop: l2.prop }));
     }
     var stage = sh.stage;
 
@@ -262,7 +265,7 @@
     trailEl.appendChild(trailWrap);
     stage.insertBefore(trailEl, title);
 
-    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "block", block: block, phase: M.sky[block.id] || "midday", name: block.title, fontKey: fontKey, motion: motion, beats: beats, trailWrap: trailWrap, trailNodes: trailNodes });
+    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "block", block: block, phase: M.sky[block.id] || "midday", name: block.title, fontKey: fontKey, motion: motion, beats: beats, trailWrap: trailWrap, trailNodes: trailNodes, layers: layers });
   }
 
   var signEls = {};
@@ -435,7 +438,7 @@
   // every layer parallaxes by depth, grows as you pass, then exits cleanly off-screen.
   // the overture logo (data-role="logo") lifts and fades as you descend into Rope Drop.
   function applyMotion(scene, p) {
-    var layers = scene.back.querySelectorAll(".layer");
+    var layers = scene.layers;
     for (var i = 0; i < layers.length; i++) {
       var L = layers[i];
       var role = L.dataset.role;
@@ -479,9 +482,7 @@
         // as the next scene's header takes over (the now-plate always shows the land too)
         var op = p > 0.88 ? clamp(1 - (p - 0.88) / 0.12, 0, 1) : 1;
         var tty = (1 - op) * -18;
-        beat.el.style.opacity = op.toFixed(3);
-        beat.el.style.transform = "translateY(" + tty.toFixed(1) + "px)";
-        beat.el.style.pointerEvents = op > 0.5 ? "auto" : "none";
+        beat.el.style.cssText = "opacity:" + op.toFixed(3) + ";transform:translateY(" + tty.toFixed(1) + "px);pointer-events:" + (op > 0.5 ? "auto" : "none") + ";";
         return;
       }
       var n = beat.n || 1, idx = beat.idx || 0;
@@ -498,9 +499,7 @@
       bop = clamp(bop, 0, 1);
       var ty = p < c ? (1 - bop) * 44 : -(1 - bop) * 40;
       var scale = 0.95 + bop * 0.06;
-      beat.el.style.opacity = bop.toFixed(3);
-      beat.el.style.transform = "translate(-50%, calc(-50% + " + ty.toFixed(1) + "px)) scale(" + scale.toFixed(3) + ")";
-      beat.el.style.pointerEvents = bop > 0.45 ? "auto" : "none";
+      beat.el.style.cssText = "opacity:" + bop.toFixed(3) + ";transform:translate(-50%, calc(-50% + " + ty.toFixed(1) + "px)) scale(" + scale.toFixed(3) + ");pointer-events:" + (bop > 0.45 ? "auto" : "none") + ";";
     });
   }
 
@@ -649,9 +648,17 @@
 
   /* ----------------------------------------------------------- backdrops (fetch + inline) */
   var svgCache = {};
+  // props with thousands of paths (photo-traced illustrations) are pre-rendered to a
+  // raster image instead of injected as live SVG — animating/masking that many DOM
+  // nodes every scroll frame is the single biggest cause of scroll jank, while a
+  // raster image transforms/composites at a fixed, cheap cost.
+  var RASTER_PROPS = { castle: "webp" };
   // bottom-anchor each prop so it stands on the ground regardless of aspect ratio;
   // the two Main Street rows anchor to their outer edge so they hug the sides.
   function setPA(el) {
+    var posX = el.classList.contains("street-l") ? "0%" : el.classList.contains("street-r") ? "100%" : "50%";
+    var img = el.querySelector("img");
+    if (img) { img.style.objectPosition = posX + " 100%"; return; }
     var s = el.querySelector("svg"); if (!s) return;
     var pa = el.classList.contains("street-l") ? "xMinYMax meet"
            : el.classList.contains("street-r") ? "xMaxYMax meet" : "xMidYMax meet";
@@ -660,6 +667,16 @@
   function loadBackdrops() {
     document.querySelectorAll(".layer[data-prop]").forEach(function (el) {
       var name = el.dataset.prop; if (!name) return;
+      var ext = RASTER_PROPS[name];
+      if (ext) {
+        if (el.querySelector("img")) return;
+        var img = document.createElement("img");
+        img.src = "assets/disney/" + name + "." + ext + "?v=1";
+        img.alt = "";
+        el.appendChild(img);
+        setPA(el);
+        return;
+      }
       if (svgCache[name]) { el.innerHTML = svgCache[name]; setPA(el); return; }
       fetch("assets/disney/" + name + ".svg?v=12").then(function (r) { return r.ok ? r.text() : ""; })
         .then(function (t) { if (t) { svgCache[name] = t; el.innerHTML = t; setPA(el); } }).catch(function () {});
