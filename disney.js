@@ -37,7 +37,33 @@
     move: '<path d="M9 5l-2 6 3 2-1 6M15 4l1 5-3 3 2 7"/><circle cx="10" cy="3.2" r="1.3"/>',
     lightning: '<path d="M13 2L5 13h6l-2 9 9-12h-6z"/>',
     vq: '<path d="M7 3h10M7 21h10M8 3c0 4 8 5 8 9s-8 5-8 9M16 3c0 4-8 5-8 9"/>',
+    crown: '<path d="M4 9l3.5 3L12 6l4.5 6L20 9l-1.6 9H5.6z"/>',
+    trophy: '<path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 13v4M8 20h8M10 20v-2h4v2"/>',
+    bonus: '<path d="M12 3l2 5 5 .4-3.8 3.3L16.5 17 12 14.2 7.5 17l1.3-5.3L5 8.4 10 8z"/><path d="M12 14v7M9 18l3 3 3-3"/>',
+    // ---- party-member character glyphs (placeholders; replace file-for-file per GRAPHICS-PACKAGE.md) ----
+    mickey: '<circle cx="6.5" cy="6" r="3"/><circle cx="17.5" cy="6" r="3"/><circle cx="12" cy="14" r="5.5"/>',
+    minnie: '<circle cx="12" cy="14" r="5.5"/><path d="M3 7l4 1.5L6.5 4zM21 7l-4 1.5L17.5 4z"/>',
+    castle: '<path d="M4 21V9l2-2 2 2v2h2V6l2-2 2 2v5h2V9l2-2 2 2v12z"/><path d="M11 21v-4h2v4"/>',
+    slipper: '<path d="M3 15c0-3 4-4 7-4s5 2 9 2c2 0 2 3 0 3-3 0-4 1-8 1s-8-.5-8-2z"/>',
+    balloon: '<path d="M12 3a5 6 0 0 1 0 12 5 6 0 0 1 0-12z"/><path d="M12 15l-1 2 2 0-1-2M12 17v4"/>',
+    lantern: '<path d="M9 3h6M10 3v2h4V3M8 7h8l-1 9H9zM11 20h2v-3h-2z"/>',
+    rocket: '<path d="M12 2c3 2 4 6 4 9l-2 4h-4l-2-4c0-3 1-7 4-9z"/><circle cx="12" cy="9" r="1.6"/><path d="M8 16l-2 4 4-1M16 16l2 4-4-1"/>',
+    pumpkin: '<path d="M12 5c0-1.5 2-2 2-3M8 8c-3 1-4 4-3 7s4 4 7 4 6-1 7-4-1-6-4-7c-2-.7-5-.7-7 0z"/>',
+    mermaid: '<circle cx="12" cy="5" r="2.4"/><path d="M12 8c-2 0-3 2-3 5 0 2-2 4-2 6 3 0 4-1 5-1s2 1 5 1c0-2-2-4-2-6 0-3-1-5-3-5z"/>',
+    sword: '<path d="M4 20l3-1L18 8l-2-2L5 17zM16 6l2-3 3 3-3 2zM6 18l-2 2"/>',
   };
+  // the picker offers these in order; label is shown in the onboarding grid
+  var CHAR_ICONS = [
+    { id: "mickey", label: "Mickey" }, { id: "minnie", label: "Minnie" },
+    { id: "castle", label: "Castle" }, { id: "slipper", label: "Slipper" },
+    { id: "balloon", label: "Balloon" }, { id: "lantern", label: "Lantern" },
+    { id: "rocket", label: "Rocket" }, { id: "pumpkin", label: "Pumpkin" },
+    { id: "mermaid", label: "Mermaid" }, { id: "sword", label: "Sword" },
+    { id: "crown", label: "Crown" }, { id: "star", label: "Star" },
+  ];
+  var COLOR_CHOICES = ["#ffb43d", "#ff6f9c", "#5ec8e0", "#8ad17a", "#b48cff", "#ff7a59",
+    "#ffd86b", "#46c2a0", "#7d8cff", "#ff5d7e", "#52b6ff", "#c0f25e"];
+  var DEFAULT_COLORS = { g1: "#ffb43d", g2: "#ff6f9c", g3: "#5ec8e0", g4: "#8ad17a", g5: "#b48cff", g6: "#ff7a59" };
   function svg(name, cls) {
     return '<span class="ic ' + (cls || "") + '"><svg viewBox="0 0 24 24">' + (ICONS[name] || "") + "</svg></span>";
   }
@@ -75,14 +101,32 @@
   var room = (test.active && localStorage.getItem("disney_testroom") !== "0") ? ROOM_TEST : ROOM_REAL;
   var state = {}, party = (M.party || ["Guest 1", "Guest 2", "Guest 3", "Guest 4", "Guest 5", "Guest 6"]).slice(0, 6);
   var mine = localStorage.getItem("disney_me") || "g1";
-  var db = null, dbParty = null;
+  var db = null, dbParty = null, dbProfiles = null;
+  var profiles = {};   // { g1: { icon, color }, ... }
   var lsKey = function () { return "disney_state_" + room; };
   var lsParty = "disney_party";
+  var lsProfiles = "disney_profiles";
   function normParty() { for (var i = 0; i < 6; i++) { if (!party[i]) party[i] = "Guest " + (i + 1); } party = party.slice(0, 6); }
   normParty();
-  function loadLocal() { try { state = JSON.parse(localStorage.getItem(lsKey()) || "{}"); } catch (e) { state = {}; } try { var p = JSON.parse(localStorage.getItem(lsParty) || "null"); if (p && p.length) party = p; } catch (e) {} normParty(); }
+  function loadLocal() { try { state = JSON.parse(localStorage.getItem(lsKey()) || "{}"); } catch (e) { state = {}; } try { var p = JSON.parse(localStorage.getItem(lsParty) || "null"); if (p && p.length) party = p; } catch (e) {} loadProfilesLocal(); normParty(); }
   function saveLocal() { try { localStorage.setItem(lsKey(), JSON.stringify(state)); } catch (e) {} }
   function savePartyLocal() { try { localStorage.setItem(lsParty, JSON.stringify(party)); } catch (e) {} }
+  function saveProfilesLocal() { try { localStorage.setItem(lsProfiles, JSON.stringify(profiles)); } catch (e) {} }
+  function loadProfilesLocal() { try { var p = JSON.parse(localStorage.getItem(lsProfiles) || "null"); if (p) profiles = p; } catch (e) {} }
+  // each member's chosen completion color / character glyph, with sensible defaults
+  function gColor(g) { return (profiles[g] && profiles[g].color) || DEFAULT_COLORS[g] || "#ffb43d"; }
+  function gIcon(g) { return profiles[g] && profiles[g].icon; }
+  function gInitial(g) { var i = GKEYS.indexOf(g); return ((party[i] || "?")[0] || "?").toUpperCase(); }
+  // a badge that honors the member's chosen color + glyph (falls back to their initial)
+  function gBadge(g, cls) {
+    var ic = gIcon(g);
+    return '<span class="guest-badge ' + g + (cls ? " " + cls : "") + '" style="background:' + gColor(g) + '">' +
+      (ic ? svg(ic) : esc(gInitial(g))) + "</span>";
+  }
+  // rides/extras done after hopping back to DL at night are "bonus" — they top off a category
+  var BONUS_IDS = {};
+  BLOCKS.forEach(function (b) { (b.quests || []).forEach(function (q) { if (q.bonus) BONUS_IDS[q.id] = true; }); });
+  function isBonus(id) { return !!BONUS_IDS[id]; }
   function isDone(id, g) { return !!(state[id] && state[id][g] && state[id][g].done); }
   function countDone(id) { var n = 0; GKEYS.forEach(function (g) { if (isDone(id, g)) n++; }); return n; }
   function isSkipped(id) { return !!(state[id] && state[id].skip); }
@@ -90,7 +134,7 @@
   function initFirebase() {
     var cfg = window.FIREBASE_CONFIG;
     if (!cfg || cfg.apiKey === "REPLACE_ME" || typeof firebase === "undefined") return false;
-    try { firebase.initializeApp(cfg); bindRoom(); bindParty(); return true; }
+    try { firebase.initializeApp(cfg); bindRoom(); bindParty(); bindProfiles(); return true; }
     catch (e) { console.warn("Firebase off:", e); db = null; return false; }
   }
   function bindRoom() {
@@ -119,6 +163,13 @@
     repaintSign(id); refreshSheet(id); refreshAhead(); updateTrailProgress();
   }
   function pushParty() { savePartyLocal(); if (dbParty) { try { dbParty.set(party); } catch (e) {} } repaintParty(); }
+  function bindProfiles() {
+    if (typeof firebase === "undefined") return;
+    dbProfiles = firebase.database().ref(room + "/profiles");
+    dbProfiles.on("value", function (s) { var v = s.val(); if (v) { profiles = v; saveProfilesLocal(); repaintParty(); buildParty(); } });
+  }
+  function pushProfiles() { saveProfilesLocal(); if (dbProfiles) { try { dbProfiles.set(profiles); } catch (e) {} } repaintParty(); }
+  function setProfile(g, patch) { profiles[g] = Object.assign({}, profiles[g], patch); pushProfiles(); }
 
   /* ----------------------------------------------------------- scene index */
   // scenes = overture + blocks + passport. blocks carry the data.
@@ -339,7 +390,7 @@
       var done = isDone(id, g), rec = state[id] && state[id][g], rot = rec && rec.rot != null ? rec.rot : -8;
       var label = party[i] || ("Guest " + (i + 1));
       return '<div class="guest-row' + (primary ? " primary" : "") + '" data-g="' + g + '">' +
-        '<span class="guest-badge ' + g + '">' + esc((label[0] || "?").toUpperCase()) + "</span>" +
+        gBadge(g, primary ? "big" : "") +
         '<span class="guest-name">' + esc(label) + (g === mine ? '<span class="you">YOU</span>' : "") + "</span>" +
         '<span class="guest-toggle">' + (done
           ? '<span class="stamp' + (popGuest === id + ":" + g ? " pop" : "") + '" style="color:' + st.ink + ';--rot:' + rot + 'deg">' + esc(st.label) + "</span>"
@@ -436,7 +487,7 @@
       document.body.classList.toggle("at-end", act === scenes.length - 1);
       updateUpNext(act);
       updateReturnNow();
-      if (marker) marker.style.display = scenes[act].trailWrap ? "" : "none";   // only on the lands
+      if (marker) marker.classList.toggle("is-hidden", passportVisible || !scenes[act].trailWrap);   // fade out off the lands / on Our Day
     });
   }
 
@@ -632,22 +683,132 @@
     sec.innerHTML = '<div class="passport" id="passport"></div>';
     film.appendChild(sec);
     scenes.push({ el: sec, stage: sec, back: document.createElement("div"), kind: "passport", phase: "night", name: "Our Day", beats: [] });
+    // the "you are here" dot belongs on the map, not the journal — fade it out cleanly
+    // whenever Our Day is on screen (robust against scene-index drift as the card grows)
+    if ("IntersectionObserver" in window) {
+      var mo = new IntersectionObserver(function (entries) {
+        passportVisible = entries[0].isIntersecting;
+        var mk = marker || $("marker");
+        if (mk) mk.classList.toggle("is-hidden", passportVisible || !(scenes[active] && scenes[active].trailWrap));
+      }, { threshold: 0 });
+      mo.observe(sec);
+    }
     renderPassport();
   }
+  var passportVisible = false;
+  // categories shown as fill-bars; "move" is dropped (near-empty, not a competition)
+  var PASS_CATS = [
+    { key: "ride", label: "Rides", icon: "ride" },
+    { key: "action", label: "Lightning Lanes", icon: "lightning" },
+    { key: "show", label: "Shows", icon: "show" },
+    { key: "food", label: "Dining", icon: "food" },
+    { key: "deadline", label: "Queues", icon: "vq" },
+  ];
+  // core (daytime) totals per category + total — computed once
+  var PASS_TOTALS = (function () {
+    var t = { grand: 0 }; PASS_CATS.forEach(function (c) { t[c.key] = 0; });
+    BLOCKS.forEach(function (b) { (b.quests || []).forEach(function (q) {
+      if (!q.bonus && t[q.type] != null) { t[q.type]++; t.grand++; }
+    }); });
+    return t;
+  })();
+  var passShowOthers = false;
+
+  function passStats(g) {
+    var cats = PASS_CATS.map(function (c) {
+      return { key: c.key, label: c.label, icon: c.icon, coreTotal: PASS_TOTALS[c.key], coreDone: 0, bonusDone: 0, complete: false };
+    });
+    var byKey = {}; cats.forEach(function (c) { byKey[c.key] = c; });
+    BLOCKS.forEach(function (b) { (b.quests || []).forEach(function (q) {
+      if (!isDone(q.id, g) || !byKey[q.type]) return;
+      if (isBonus(q.id)) byKey[q.type].bonusDone++; else byKey[q.type].coreDone++;
+    }); });
+    var coreDone = 0, bonus = 0, allComplete = true;
+    cats.forEach(function (c) {
+      c.complete = c.coreTotal > 0 && c.coreDone >= c.coreTotal;
+      coreDone += c.coreDone; bonus += c.bonusDone;
+      if (c.coreTotal > 0 && !c.complete) allComplete = false;
+    });
+    return { cats: cats, coreDone: coreDone, coreTotal: PASS_TOTALS.grand, bonus: bonus,
+      score: coreDone + bonus, pct: PASS_TOTALS.grand ? coreDone / PASS_TOTALS.grand : 0, allComplete: allComplete };
+  }
+
+  function passBar(c, color) {
+    var pct = c.coreTotal ? Math.min(1, c.coreDone / c.coreTotal) : 0;
+    var cls = "pass-bar" + (c.complete ? " done" : "");
+    var fill = '<span class="pb-fill" style="width:' + (pct * 100).toFixed(1) + '%;background:' + (c.complete ? "" : color) + '"></span>';
+    var bonus = c.bonusDone > 0 ? '<span class="pb-bonus">+' + c.bonusDone + '</span>' : "";
+    return '<div class="' + cls + '">' +
+      '<span class="pb-ic">' + svg(c.icon) + '</span>' +
+      '<span class="pb-label">' + c.label + '</span>' +
+      '<span class="pb-track">' + fill + '</span>' +
+      '<span class="pb-n">' + c.coreDone + '/' + c.coreTotal + (c.complete ? ' ✓' : '') + '</span>' + bonus +
+      '</div>';
+  }
+
+  function ordinal(n) { var s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+
+  function passCard(g, rank, big) {
+    var i = GKEYS.indexOf(g), st = passStats(g), color = gColor(g);
+    var html = '<div class="pass-card' + (big ? " big" : "") + (st.allComplete ? " all-complete" : "") + '" style="--gc:' + color + '">';
+    html += '<div class="pass-head">' + gBadge(g, "big") +
+      '<span class="pass-id"><span class="pass-name">' + esc(party[i]) + (g === mine ? ' <span class="you">YOU</span>' : '') + '</span>' +
+      '<span class="pass-rank">' + (rank === 1 ? svg("crown") : "") + ordinal(rank) + ' of 6</span></span>' +
+      '<span class="pass-total">' + st.score + '<small>pts</small></span></div>';
+    // overall day-completion master bar
+    html += '<div class="pass-master"><span class="pm-fill" style="width:' + (st.pct * 100).toFixed(1) + '%;background:' + color + '"></span></div>' +
+      '<div class="pass-meta"><span>' + st.coreDone + '/' + st.coreTotal + ' of the day</span>' +
+      (st.bonus > 0 ? '<span class="pass-bonusmeta">' + svg("bonus") + st.bonus + ' bonus magic</span>' : '') + '</div>';
+    html += '<div class="pass-stats">';
+    st.cats.forEach(function (c) { html += passBar(c, color); });
+    html += '</div></div>';
+    return html;
+  }
+
   function renderPassport() {
     var el = $("passport"); if (!el) return;
-    var cats = [["ride", "Rides ridden", "ride"], ["action", "Lightning Lanes booked", "lightning"], ["show", "Shows attended", "show"], ["food", "Dining", "food"], ["deadline", "Queues joined", "vq"]];
-    var html = '<h2 class="passport-title">Our Day</h2><p class="passport-sub">A stamp book for ' + esc(M.title) + "</p>";
-    GKEYS.forEach(function (g, gi) {
-      var counts = {}, total = 0;
-      BLOCKS.forEach(function (b) { (b.quests || []).forEach(function (q) { if (isDone(q.id, g)) { counts[q.type] = (counts[q.type] || 0) + 1; total++; } }); });
-      html += '<div class="pass-card"><div class="pass-head"><span class="guest-badge ' + g + '">' + esc((party[gi][0] || "?").toUpperCase()) + '</span>' +
-        '<span class="pass-name">' + esc(party[gi]) + '</span><span class="pass-total">' + total + '</span></div><div class="pass-stats">';
-      cats.forEach(function (c) { html += '<div class="pass-stat">' + svg(c[2]) + '<span>' + c[1] + '</span><span class="n">' + (counts[c[0]] || 0) + "</span></div>"; });
-      html += "</div></div>";
+    // rank everyone by score (bonus, then core, then party order break ties)
+    var ranked = GKEYS.map(function (g) { return { g: g, st: passStats(g) }; });
+    ranked.sort(function (a, b) {
+      return (b.st.score - a.st.score) || (b.st.bonus - a.st.bonus) || (b.st.coreDone - a.st.coreDone) ||
+        (GKEYS.indexOf(a.g) - GKEYS.indexOf(b.g));
     });
+    var rankOf = {}; ranked.forEach(function (r, idx) { rankOf[r.g] = idx + 1; });
+
+    var html = '<h2 class="passport-title">Our Day</h2>' +
+      '<p class="passport-sub">' + svg("trophy") + ' The standings · ' + esc(M.title) + '</p>';
+
+    // leaderboard strip
+    html += '<div class="pass-board">';
+    ranked.forEach(function (r, idx) {
+      var color = gColor(r.g), pct = (r.st.pct * 100).toFixed(1);
+      html += '<div class="lb-row' + (r.g === mine ? " me" : "") + '">' +
+        '<span class="lb-rank">' + (idx === 0 ? svg("crown") : (idx + 1)) + '</span>' +
+        gBadge(r.g) +
+        '<span class="lb-name">' + esc(party[GKEYS.indexOf(r.g)]) + '</span>' +
+        '<span class="lb-track"><span class="lb-fill" style="width:' + pct + '%;background:' + color + '"></span></span>' +
+        '<span class="lb-pts">' + r.st.score + '</span>' +
+        '</div>';
+    });
+    html += '</div>';
+
+    // your big card
+    html += '<p class="pass-section">Your stamp book</p>';
+    html += passCard(mine, rankOf[mine], true);
+
+    // faux stack + reveal
+    var others = ranked.filter(function (r) { return r.g !== mine; });
+    html += '<div class="pass-others' + (passShowOthers ? " open" : "") + '">';
+    html += '<button class="pass-reveal" id="passReveal"><span class="pr-stack" aria-hidden="true"><i></i><i></i><i></i></span>' +
+      (passShowOthers ? "Hide everyone's books" : "See everyone's books") + '</button>';
+    html += '<div class="pass-others-list">';
+    others.forEach(function (r) { html += passCard(r.g, rankOf[r.g], false); });
+    html += '</div></div>';
+
     html += '<button class="pass-foot linkish" id="passMap">' + svg("map") + ' Back to the map</button>';
     el.innerHTML = html;
+
+    var rv = $("passReveal"); if (rv) rv.addEventListener("click", function () { passShowOthers = !passShowOthers; renderPassport(); });
     var pm = $("passMap"); if (pm) pm.addEventListener("click", function () { jumpTo(nowSceneIndex()); });
   }
 
@@ -785,16 +946,40 @@
     });
   }
 
+  // reusable icon + color picker (onboarding + party editor)
+  function pickerHTML(g) {
+    var icons = CHAR_ICONS.map(function (ic) {
+      return '<button type="button" class="pk-ic' + (gIcon(g) === ic.id ? " sel" : "") + '" data-g="' + g + '" data-icon="' + ic.id + '" title="' + ic.label + '">' + svg(ic.id) + '</button>';
+    }).join("");
+    var colors = COLOR_CHOICES.map(function (c) {
+      return '<button type="button" class="pk-color' + (gColor(g) === c ? " sel" : "") + '" data-g="' + g + '" data-color="' + c + '" style="background:' + c + '"></button>';
+    }).join("");
+    return '<div class="pk"><div class="pk-icons">' + icons + '</div><div class="pk-colors">' + colors + '</div></div>';
+  }
+  // delegated click handler — wire once per container; re-paints the affected badges
+  function wirePicker(scope, after) {
+    if (scope._pkBound) return; scope._pkBound = true;
+    scope.addEventListener("click", function (e) {
+      var ib = e.target.closest(".pk-ic"), cb = e.target.closest(".pk-color");
+      if (ib) { setProfile(ib.dataset.g, { icon: ib.dataset.icon }); if (after) after(ib.dataset.g); }
+      else if (cb) { setProfile(cb.dataset.g, { color: cb.dataset.color }); if (after) after(cb.dataset.g); }
+    });
+  }
+
   function buildParty() {
     var list = $("partyList"); list.innerHTML = "";
     party.forEach(function (name, i) {
       var g = GKEYS[i];
       var row = document.createElement("div"); row.className = "party-row";
-      row.innerHTML = '<span class="guest-badge ' + g + '">' + esc((name[0] || "?").toUpperCase()) + '</span>';
+      var head = document.createElement("div"); head.className = "party-row-head";
+      head.innerHTML = gBadge(g);
       var inp = document.createElement("input"); inp.value = name; inp.maxLength = 14;
-      inp.addEventListener("change", function () { party[i] = inp.value.trim().slice(0, 14) || ("Guest " + (i + 1)); row.querySelector(".guest-badge").textContent = (party[i][0] || "?").toUpperCase(); pushParty(); });
-      row.appendChild(inp); list.appendChild(row);
+      inp.addEventListener("change", function () { party[i] = inp.value.trim().slice(0, 14) || ("Guest " + (i + 1)); pushParty(); buildParty(); });
+      head.appendChild(inp); row.appendChild(head);
+      var pk = document.createElement("div"); pk.innerHTML = pickerHTML(g); row.appendChild(pk.firstChild);
+      list.appendChild(row);
     });
+    wirePicker(list, function () { buildParty(); });
     var mineWrap = $("partyMine"); mineWrap.innerHTML = "";
     party.forEach(function (name, i) {
       var g = GKEYS[i];
@@ -822,20 +1007,42 @@
     $("dedSync").innerHTML = "This is your party's <strong>shared map</strong>. Every stamp the six of you collect appears on all your phones, live — wander together, even when you split up. Time-sensitive reminders (like the World of Color queue) can buzz you in Settings.";
   }
 
-  // one-time intro: pick which guest holds this phone, then fade into "A Park Day"
+  // one-time intro: pick who holds this phone → customize icon + color → fade in
   function buildIntro() {
     var wrap = $("introWho"); if (!wrap) return; wrap.innerHTML = "";
     party.forEach(function (name, i) {
       var b = document.createElement("button"); b.textContent = name;
       b.addEventListener("click", function () {
         mine = GKEYS[i]; localStorage.setItem("disney_me", mine);
-        try { localStorage.setItem("disney_intro", "1"); } catch (e) {}
-        var intro = $("intro"); intro.classList.add("gone");
-        window.scrollTo(0, 0);
-        setTimeout(function () { intro.hidden = true; onScroll(); }, 850);
+        introCustomize(GKEYS[i]);
       });
       wrap.appendChild(b);
     });
+  }
+  function dismissIntro() {
+    try { localStorage.setItem("disney_intro", "1"); } catch (e) {}
+    var intro = $("intro"); intro.classList.add("gone");
+    window.scrollTo(0, 0);
+    setTimeout(function () { intro.hidden = true; onScroll(); }, 850);
+  }
+  // step 2 — pick a character + completion color, then enter
+  function introCustomize(g) {
+    var inner = $("intro").querySelector(".intro-inner"); if (!inner) return;
+    function paint() {
+      inner.innerHTML = '<p class="intro-kicker">Make it yours</p>' +
+        '<div class="intro-badge">' + gBadge(g, "big") + '</div>' +
+        '<h1 class="intro-title2">' + esc(party[GKEYS.indexOf(g)]) + '</h1>' +
+        '<p class="intro-sub">Pick your character and your color. Every stamp you earn fills up in this color.</p>' +
+        pickerHTML(g) +
+        '<button class="enter-btn" id="introGo">Let\'s go</button>';
+      inner.querySelector(".pk").addEventListener("click", function (e) {
+        var ib = e.target.closest(".pk-ic"), cb = e.target.closest(".pk-color");
+        if (ib) { setProfile(g, { icon: ib.dataset.icon }); paint(); }
+        else if (cb) { setProfile(g, { color: cb.dataset.color }); paint(); }
+      });
+      inner.querySelector("#introGo").addEventListener("click", dismissIntro);
+    }
+    paint();
   }
 
   /* ----------------------------------------------------------- testing */

@@ -165,6 +165,25 @@ If you give me the files, I'll swap them into the `ICONS` set (they currently li
 `disney.js`). For the official LL logo (full color), send it as its own `ll-logo.svg` and
 I'll special-case it.
 
+## 7b. Party character icons (onboarding picker)
+
+Each party member picks a **character glyph** + a **completion color** on the one-time intro
+("Make it yours") and can change it later in **Settings → Edit our party**. The glyph shows in
+their badge everywhere (stamp sheet, leaderboard, Our Day cards) and the color is what fills
+their progress bars.
+
+These currently ship as **simple placeholder line-glyphs** in the `ICONS` map in `disney.js`
+(`CHAR_ICONS` lists which ones the picker offers, in order). Replace them with real character
+art the same way as everything else — same icon id, **24×24 viewBox**, line/stroke style to
+match the rest of the set (`fill:none; stroke:currentColor`), single color (the badge tints
+the background, the glyph inherits a dark ink). Current ids:
+
+- `mickey`, `minnie`, `castle`, `slipper`, `balloon`, `lantern`, `rocket`, `pumpkin`,
+  `mermaid`, `sword`, `crown`, `star`.
+
+To add/remove options, edit the `CHAR_ICONS` array (label + id) and add the matching path to
+`ICONS`. To change the default swatches, edit `COLOR_CHOICES` / `DEFAULT_COLORS`.
+
 ## 8. Priority order
 
 1. `disneyland-logo` — the very first thing guests see (overture).
