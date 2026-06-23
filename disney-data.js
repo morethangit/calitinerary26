@@ -27,7 +27,7 @@
 window.DISNEY_DAY = {
   meta: {
     title: "Disneyland Park Hopper",
-    subtitle: "July 2026 · Group of 4 · all LLMP",
+    subtitle: "July 2026 · Group of 6 · all LLMP",
     parks: "Disneyland + Disney California Adventure",
     hours: "DL 8 AM–Midnight · DCA 8 AM–10 PM",
     dayStartMin: 480,   // 8:00 AM — top of the timeline
@@ -70,9 +70,9 @@ window.DISNEY_DAY = {
     /* lands that get a slow orbiting decoration the viewport passes */
     orbit: ["morning-sweep", "galaxys-edge", "wind-down"],
 
-    /* v3 — the party. Four guests; names editable in-app (synced under
+    /* v3 — the party. Six guests; names editable in-app (synced under
        disney2026/party). Each attraction tracks each guest independently. */
-    party: ["Nolan", "Friend 2", "Friend 3", "Friend 4"],
+    party: ["Nolan", "Friend 2", "Friend 3", "Friend 4", "Matthew", "Isaac"],
 
     /* v3 — per-land personality.
        motion: the animation language of the scene
