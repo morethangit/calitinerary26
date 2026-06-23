@@ -13,7 +13,7 @@
   if (!DAY) return;
   var BLOCKS = DAY.blocks, M = DAY.meta;
   var DAY_START = M.dayStartMin, DAY_END = M.dayEndMin;
-  var GKEYS = ["g1", "g2", "g3", "g4"];
+  var GKEYS = ["g1", "g2", "g3", "g4", "g5", "g6"];
 
   /* ----------------------------------------------------------- inline icons */
   var ICONS = {
@@ -73,12 +73,12 @@
   /* ----------------------------------------------------------- state + sync */
   var ROOM_REAL = "disney2026", ROOM_TEST = "disney2026_test";
   var room = (test.active && localStorage.getItem("disney_testroom") !== "0") ? ROOM_TEST : ROOM_REAL;
-  var state = {}, party = (M.party || ["Guest 1", "Guest 2", "Guest 3", "Guest 4"]).slice(0, 4);
+  var state = {}, party = (M.party || ["Guest 1", "Guest 2", "Guest 3", "Guest 4", "Guest 5", "Guest 6"]).slice(0, 6);
   var mine = localStorage.getItem("disney_me") || "g1";
   var db = null, dbParty = null;
   var lsKey = function () { return "disney_state_" + room; };
   var lsParty = "disney_party";
-  function normParty() { for (var i = 0; i < 4; i++) { if (!party[i]) party[i] = "Guest " + (i + 1); } party = party.slice(0, 4); }
+  function normParty() { for (var i = 0; i < 6; i++) { if (!party[i]) party[i] = "Guest " + (i + 1); } party = party.slice(0, 6); }
   normParty();
   function loadLocal() { try { state = JSON.parse(localStorage.getItem(lsKey()) || "{}"); } catch (e) { state = {}; } try { var p = JSON.parse(localStorage.getItem(lsParty) || "null"); if (p && p.length) party = p; } catch (e) {} normParty(); }
   function saveLocal() { try { localStorage.setItem(lsKey(), JSON.stringify(state)); } catch (e) {} }
@@ -102,7 +102,7 @@
   function bindParty() {
     if (typeof firebase === "undefined") return;
     dbParty = firebase.database().ref(room + "/party");
-    dbParty.on("value", function (s) { var v = s.val(); if (v && v.length) { party = v.slice(0, 4); normParty(); savePartyLocal(); repaintParty(); buildParty(); buildDirectory(); } });
+    dbParty.on("value", function (s) { var v = s.val(); if (v && v.length) { party = v.slice(0, 6); normParty(); savePartyLocal(); repaintParty(); buildParty(); buildDirectory(); } });
   }
   function setGuest(id, g, done) {
     if (!state[id]) state[id] = {};
@@ -295,11 +295,11 @@
       if (pip) pip.classList.toggle("on", isDone(id, g));
     });
     var n = countDone(id), skip = isSkipped(id);
-    el.classList.toggle("complete", n === 4);
+    el.classList.toggle("complete", n === GKEYS.length);
     el.classList.toggle("glow", n >= 1);            // any one person checking it off lights it up
     el.classList.toggle("skipped", skip && n === 0);
     var hint = el.querySelector(".sign-hint");
-    if (hint) hint.textContent = n ? n + " of 4 done" : (skip ? "skipped" : "tap to open");
+    if (hint) hint.textContent = n ? n + " of " + GKEYS.length + " done" : (skip ? "skipped" : "tap to open");
   }
   function repaintAll() { Object.keys(signEls).forEach(repaintSign); if (curSheetId) refreshSheet(curSheetId); updateNow(); refreshAhead(); updateTrailProgress(); renderPassport(); }
   function repaintParty() { renderPassport(); if (curSheetId) refreshSheet(curSheetId); }
@@ -814,7 +814,7 @@
   /* ----------------------------------------------------------- dedication */
   function fillDedication() {
     $("dedBody").textContent = "Disneyland is your land. Seventy-one years ago to the day — July 17, 1955 — Walt opened these gates with these words. Today, they're yours.";
-    $("dedSync").innerHTML = "This is your party's <strong>shared map</strong>. Every stamp the four of you collect appears on all your phones, live — wander together, even when you split up. Time-sensitive reminders (like the World of Color queue) can buzz you in Settings.";
+    $("dedSync").innerHTML = "This is your party's <strong>shared map</strong>. Every stamp the six of you collect appears on all your phones, live — wander together, even when you split up. Time-sensitive reminders (like the World of Color queue) can buzz you in Settings.";
   }
 
   // one-time intro: pick which guest holds this phone, then fade into "A Park Day"

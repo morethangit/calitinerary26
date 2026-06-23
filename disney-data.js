@@ -70,9 +70,9 @@ window.DISNEY_DAY = {
     /* lands that get a slow orbiting decoration the viewport passes */
     orbit: ["morning-sweep", "galaxys-edge", "wind-down"],
 
-    /* v3 — the party. Four guests; names editable in-app (synced under
+    /* v3 — the party. Six guests; names editable in-app (synced under
        disney2026/party). Each attraction tracks each guest independently. */
-    party: ["Nolan", "Friend 2", "Friend 3", "Friend 4"],
+    party: ["Nolan", "Friend 2", "Friend 3", "Friend 4", "Matthew", "Isaac"],
 
     /* v3 — per-land personality.
        motion: the animation language of the scene

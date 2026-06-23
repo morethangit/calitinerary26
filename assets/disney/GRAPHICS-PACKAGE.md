@@ -73,7 +73,7 @@ flat placeholder SVGs; you replace them **file-for-file** (same names) and it ju
 | World of Color | `#34c0e0` |
 | Night Session | `#9a4bef` |
 
-**Guests** (badge/pip colors): `g1 #ffb43d` · `g2 #ff6f9c` · `g3 #5ec8e0` · `g4 #8ad17a`
+**Guests** (badge/pip colors): `g1 #ffb43d` · `g2 #ff6f9c` · `g3 #5ec8e0` · `g4 #8ad17a` · `g5 #b48cff` · `g6 #ff7a59`
 **Stamp inks** (by type): ride `#2f8f63` · food `#b9542f` · show `#7a4fb0` · move `#3a6ea5`
 · lightning-lane(action) `#c79a2e` · virtual-queue(deadline) `#c0344f`
 

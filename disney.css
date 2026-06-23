@@ -18,8 +18,8 @@
   --gold: #ffcf6b;
   --gold-deep: #e2a33f;
 
-  /* four explorers */
-  --g1: #ffb43d; --g2: #ff6f9c; --g3: #5ec8e0; --g4: #8ad17a;
+  /* six explorers */
+  --g1: #ffb43d; --g2: #ff6f9c; --g3: #5ec8e0; --g4: #8ad17a; --g5: #b48cff; --g6: #ff7a59;
 
   /* driven by JS */
   --sky-a: #f9c8a0; --sky-b: #b58fd6;
@@ -154,6 +154,7 @@ body { -webkit-font-smoothing: antialiased; }
 .pip.on { transform: scale(1.05); }
 .pip.on { border-color: transparent; }
 .pip.g1.on { background: var(--g1);} .pip.g2.on { background: var(--g2);} .pip.g3.on { background: var(--g3);} .pip.g4.on { background: var(--g4);}
+.pip.g5.on { background: var(--g5);} .pip.g6.on { background: var(--g6);}
 .sign-hint { margin-top: 6px; font-size: .72rem; font-weight: 700; opacity: .8; letter-spacing: .4px; }
 .stop-sign.deadline .sign-plate { background: linear-gradient(120deg,#ff3b6b,#9a1f3e);
   animation: dlsign 1.8s ease-in-out infinite; }
@@ -208,6 +209,7 @@ body { -webkit-font-smoothing: antialiased; }
 .guest-badge { width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center;
   font-weight: 800; font-size: .82rem; color: #1a1330; }
 .guest-badge.g1 { background: var(--g1);} .guest-badge.g2 { background: var(--g2);} .guest-badge.g3 { background: var(--g3);} .guest-badge.g4 { background: var(--g4);}
+.guest-badge.g5 { background: var(--g5);} .guest-badge.g6 { background: var(--g6);}
 .guest-name { font-weight: 700; font-size: 1rem; flex: 1; }
 .guest-name .you { font-size: .66rem; font-weight: 800; opacity: .7; margin-left: 6px; letter-spacing: 1px; }
 .guest-toggle { width: 78px; height: 36px; flex: none; display: grid; place-items: center; position: relative; }
