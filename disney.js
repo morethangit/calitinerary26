@@ -353,8 +353,11 @@
     others.forEach(function (g) { html += guestRow(g, false); });
     // skip control — advances the day/trail without anyone stamping it
     var skipped = isSkipped(id);
+    html += '<div class="sheet-actions">';
     html += '<button class="sheet-skip' + (skipped ? " on" : "") + '" id="sheetSkip">' +
-      svg(skipped ? "star" : "move") + " " + (skipped ? "Skipped &mdash; tap to un-skip" : "Activity Skipped") + "</button>";
+      svg(skipped ? "star" : "move") + " " + (skipped ? "Skipped" : "Activity skipped") + "</button>";
+    html += '<button class="sheet-done" id="sheetDone">Done</button>';
+    html += '</div>';
     var c = $("sheetContent");
     c.innerHTML = html;
     popGuest = null;
@@ -373,6 +376,8 @@
       setSkip(id, willSkip);
       if (willSkip) { closeSheet(); navToActivity(1); }   // skipping advances to the next activity
     });
+    var dn = $("sheetDone");
+    if (dn) dn.addEventListener("click", function () { closeSheet(); });
   }
 
   /* ----------------------------------------------------------- scene engine */
