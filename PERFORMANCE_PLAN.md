@@ -31,37 +31,44 @@ These five files alone are ~8.5 MB of network payload and DOM/paint cost for a s
 
 Note: no headless browser was available in this environment to capture a visual before/after, so scroll-smoothness should still be spot-checked on a real device.
 
-## 2. Service worker precache list vs. asset weight
+## 2. Service worker precache list vs. asset weight — ✅ done
 
-`sw.js` precaches `disney.html`, `disney.css`, `disney.js`, etc. but not the land art (good — avoids blocking install on megabytes of SVG). After fix #1, consider adding the now-small WebP props to `CORE` so the park map is fully offline-capable on first visit, since the precache cost would become trivial.
+`sw.js` precached `disney.html`, `disney.css`, `disney.js`, etc. but not the land art. Now that fix #1 made those WebPs small (340 KB-875 KB each, ~3.3 MB total), added all six to `CORE` (with the same `?v=1` query the runtime fetch uses, so cache keys match) so the park map is fully offline-capable after first visit — worthwhile for a PWA meant to be used inside the park where cell service is spotty.
 
-## 3. `package.json` ships `vercel` as a runtime dependency
+## 3. `package.json` ships `vercel` as a runtime dependency — ✅ done
 
-`vercel` is a deploy CLI, not used by the app at runtime. Listing it under `dependencies` (not `devDependencies`) means it gets installed in every environment that does `npm install` for the app, pulling in a large dependency tree for no runtime benefit. Move it to `devDependencies` or drop it entirely if deploys go through the Vercel dashboard/GitHub integration rather than the CLI.
+Moved `vercel` from `dependencies` to `devDependencies` and regenerated `package-lock.json` (`npm install --package-lock-only`) so the ~390 transitive packages it pulls in are correctly flagged `"dev": true` and won't install in a production-only install.
 
-## 4. Firebase: compat bundle + `document.write` injection
+Side finding, not acted on: the `firebase` npm package also isn't imported anywhere — `disney.html` loads Firebase via the CDN compat `<script>` tags, not the npm package. It may be intentionally kept for tooling not visible in this repo; flagging rather than removing since that wasn't part of this plan and removing a dependency blind is riskier than leaving an unused one.
 
-`disney.html` loads `firebase-app-compat.js` + `firebase-database-compat.js` via `document.write` (parser-blocking, and only after a synchronous IIFE check runs). The compat bundles are notably larger than the modular v9+ SDK. Switching `disney.js`'s Firebase calls to the modular API (`import { initializeApp } from "firebase/app"`, `import { getDatabase, ref, onValue } from "firebase/database"`) and loading via a regular `<script type="module">`/CDN ESM URL would cut the Firebase payload substantially and remove the `document.write` parser-blocking pattern. This is a larger refactor than #1-#3 (touches every `firebase.*` call site in `disney.js`), so it's lower priority unless Firebase load time shows up as a bottleneck in measurement.
+## 4. Firebase: compat bundle + `document.write` injection — deferred
 
-## 5. Google Fonts: weights loaded but not all used
+`disney.html` loads `firebase-app-compat.js` + `firebase-database-compat.js` via `document.write` (parser-blocking, and only after a synchronous IIFE check runs). The compat bundles are notably larger than the modular v9+ SDK. Switching `disney.js`'s Firebase calls to the modular API (`import { initializeApp } from "firebase/app"`, `import { getDatabase, ref, onValue } from "firebase/database"`) and loading via a regular `<script type="module">`/CDN ESM URL would cut the Firebase payload substantially and remove the `document.write` parser-blocking pattern.
 
-- `index.html` requests Syne 400/500/600/700/800 + Outfit 400/600/700/800 — 9 weight files.
-- `disney.html` requests 4 separate families (Cinzel Decorative, Lobster Two incl. italic, Righteous, Nunito) at multiple weights.
+**Not done in this pass**: this touches every `firebase.*` call site in `disney.js` (real-time party/quest sync), and there is no headless browser available in this environment to verify sync still works after the rewrite. Recommend doing this with the ability to actually run the app and test multi-device sync, not blind.
 
-Worth auditing actual `font-weight` usage in `styles.css`/`disney.css` and trimming the `@import` weight list to only what's referenced — each unused weight is a wasted font file fetch on every first visit (fonts aren't precached by the service worker either).
+## 5. Google Fonts: weights loaded but not all used — ✅ done
 
-## 6. No minification/build step
+Audited actual `font-weight` usage against each requested family:
+- `index.html`: Syne was requested at 400/500/600/700/800 but every Syne rule in `styles.css` uses only 600/700/800 — 400 and 500 were dead weight. Trimmed to `wght@600;700;800`. Outfit's 400/600/700/800 all confirmed in use (400 is the implicit body-text weight).
+- `disney.html`: Cinzel Decorative's 700/900 are both used — no change. Righteous has only one weight — no change. Lobster Two was requested with an italic variant (`1,700`) that's never used anywhere (`font-style: italic` doesn't appear in `disney.css`) — dropped. Nunito was requested at 400/600/700/800 but 600 is never used (only 400 implicit, 700, 800 — the only `font-weight: 900` rules in the file are Cinzel Decorative, not Nunito) — dropped 600.
 
-All JS/CSS ship unminified directly from source. For a project this size (largest file `disney.js` at 56 KB raw) this is a minor win compared to #1, but a simple `esbuild`/`terser` pass before deploy (or a Vercel build step) would shave parse/transfer size for `disney.js`, `app.js`, `data.js`, `styles.css`, `disney.css` essentially for free, with no source changes required.
+Result: 9→7 font weight files for `index.html`, 9→8 for `disney.html`.
+
+## 6. No minification/build step — deferred
+
+All JS/CSS ship unminified directly from source. Adding this means introducing an actual build step (`esbuild`/`terser` + a `vercel.json` build command or framework config) in a project that currently deploys as zero-config static files.
+
+**Not done in this pass**: changing the deploy pipeline isn't verifiable without an actual deploy, and there's no way to test a broken `vercel.json`/build command from this environment. Given it's the lowest-impact item on this list (largest file is 56 KB raw), recommend doing this as its own change with a real deploy/preview to confirm before merging.
 
 ## Suggested order of execution
 
-1. Rasterize the 5 remaining oversized SVGs → biggest, lowest-risk win (item 1).
-2. Trim `package.json` (item 3) — trivial.
-3. Audit/trim font weights (item 5) — trivial, needs a quick grep of used weights.
-4. Add new raster assets to SW precache (item 2) — trivial, depends on item 1.
-5. Evaluate modular Firebase SDK migration (item 4) — only if profiling still shows Firebase as a load-time bottleneck after 1-3.
-6. Add a minify build step (item 6) — nice-to-have, do last since it touches deploy config.
+1. ~~Rasterize the 5 remaining oversized SVGs~~ — done.
+2. ~~Trim `package.json`~~ — done.
+3. ~~Audit/trim font weights~~ — done.
+4. ~~Add new raster assets to SW precache~~ — done.
+5. Evaluate modular Firebase SDK migration — deferred, needs a real browser to verify sync.
+6. Add a minify build step — deferred, needs a real deploy to verify.
 
 ## Verification
 
