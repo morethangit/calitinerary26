@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Lobster+Two:ital,wght@0,400;0,700;1,700&family=Righteous&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="disney.css?v=11" />
+  <link rel="stylesheet" href="disney.css?v=12" />
 </head>
 <body>
   <!-- living sky (time of day) -->
@@ -30,9 +30,7 @@
   <!-- sparkle fx -->
   <canvas id="fx" aria-hidden="true"></canvas>
 
-  <!-- the trail: a swaying gold path + pulsing marker that glows as activities complete -->
-  <svg id="trail" aria-hidden="true" preserveAspectRatio="none"><path id="trailBase" fill="none"/><path id="trailGlow" fill="none"/></svg>
-  <div id="trailNodes" aria-hidden="true"></div>
+  <!-- the trail "you are here" marker — pinned mid-screen; each land's trail flows past it -->
   <div id="marker" aria-hidden="true"><span class="marker-core"></span><span class="marker-ring"></span></div>
 
   <!-- top bar: directory · current land · settings -->
@@ -168,7 +166,7 @@
       }
     })();
   </script>
-  <script src="disney-data.js?v=11"></script>
-  <script src="disney.js?v=11"></script>
+  <script src="disney-data.js?v=12"></script>
+  <script src="disney.js?v=12"></script>
 </body>
 </html>

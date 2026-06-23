@@ -246,7 +246,23 @@
       beats.push({ el: beat, kind: item.kind, idx: i, n: N, id: item.kind === "stop" ? item.q.id : null });
     });
 
-    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "block", block: block, phase: M.sky[block.id] || "midday", name: block.title, fontKey: fontKey, motion: motion, beats: beats });
+    // per-land trail: a dotted centered line + this land's stop-nodes that flow up past the
+    // fixed marker as you scroll (placed/animated in placeTrailNodes + updateSceneTrail).
+    var trailEl = document.createElement("div"); trailEl.className = "scene-trail";
+    var trailWrap = document.createElement("div"); trailWrap.className = "scene-trail-nodes";
+    var trailNodes = {};
+    beats.forEach(function (b) {
+      if (b.kind !== "stop") return;
+      var step = (INFO_END - INFO_START) / Math.max(1, b.n || 1);
+      var centerP = INFO_START + step * ((b.idx || 0) + 0.5);
+      var nd = document.createElement("div"); nd.className = "trail-node";
+      nd.dataset.centerp = centerP;
+      trailWrap.appendChild(nd); trailNodes[b.id] = nd;
+    });
+    trailEl.appendChild(trailWrap);
+    stage.insertBefore(trailEl, title);
+
+    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "block", block: block, phase: M.sky[block.id] || "midday", name: block.title, fontKey: fontKey, motion: motion, beats: beats, trailWrap: trailWrap, trailNodes: trailNodes });
   }
 
   var signEls = {};
@@ -369,7 +385,7 @@
     }
     docScroll = Math.max(1, (document.body.scrollHeight || document.documentElement.scrollHeight) - V);
     buildActivityIndex();
-    layoutTrail();
+    placeTrailNodes();
     updateTrailProgress();
   }
 
@@ -386,7 +402,7 @@
         if (center >= top && center < top + h) { act = i; actP = p; }
         var near = (top - sy < V * 1.6 && top + h - sy > -V * 0.6);
         scenes[i].el.classList.toggle("live", near);
-        if (near) { applyMotion(scenes[i], p); revealBeats(scenes[i], p); }
+        if (near) { applyMotion(scenes[i], p); revealBeats(scenes[i], p); updateSceneTrail(scenes[i], p); }
       }
       active = act;
       // sky from active scene → next
@@ -412,7 +428,7 @@
       document.body.classList.toggle("at-end", act === scenes.length - 1);
       updateUpNext(act);
       updateReturnNow();
-      updateTrailMarker(sy);
+      if (marker) marker.style.display = scenes[act].trailWrap ? "" : "none";   // only on the lands
     });
   }
 
@@ -556,48 +572,40 @@
     }
   }
 
-  /* --------- the trail: a swaying gold path + marker that glows with progress --------- */
-  var trailSvg, trailBase, trailGlow, marker, trailWrap, glowLen = 0, trailBand = { top: 70, h: 600 }, trailNodeEls = {};
-  function swayAmp() { return clamp(vw() * 0.05, 14, 34); }
-  function swayX(y) { return vw() / 2 + swayAmp() * Math.sin(y / 150); }
-  function layoutTrail() {
-    trailSvg = trailSvg || $("trail"); if (!trailSvg) return;
-    trailBase = trailBase || $("trailBase"); trailGlow = trailGlow || $("trailGlow");
-    marker = marker || $("marker"); trailWrap = trailWrap || $("trailNodes");
-    var W = vw(), V = vh();
-    trailBand = { top: 72, h: Math.max(120, V - 72 - 104) };   // clear the topbar + bottom navbar
-    trailSvg.setAttribute("width", W); trailSvg.setAttribute("height", V);
-    trailSvg.setAttribute("viewBox", "0 0 " + W + " " + V);
-    var d = "M " + swayX(trailBand.top).toFixed(1) + " " + trailBand.top.toFixed(1);
-    for (var y = trailBand.top + 12; y <= trailBand.top + trailBand.h; y += 12) d += " L " + swayX(y).toFixed(1) + " " + y.toFixed(1);
-    trailBase.setAttribute("d", d); trailGlow.setAttribute("d", d);
-    glowLen = trailGlow.getTotalLength(); trailGlow.style.strokeDasharray = glowLen;
-    if (trailWrap) {
-      trailWrap.innerHTML = ""; trailNodeEls = {};
-      activities.forEach(function (a) {
-        var y = trailBand.top + a.frac * trailBand.h, x = swayX(y);
-        var nd = document.createElement("div"); nd.className = "trail-node";
-        nd.style.left = x.toFixed(1) + "px"; nd.style.top = y.toFixed(1) + "px";
-        trailWrap.appendChild(nd); trailNodeEls[a.id] = nd;
-      });
-    }
-  }
-  function updateTrailMarker(sy) {
-    if (!marker || !glowLen) return;
-    var frac = clamp(sy / docScroll, 0, 1);
-    var y = trailBand.top + frac * trailBand.h;
-    marker.style.top = y.toFixed(1) + "px"; marker.style.left = swayX(y).toFixed(1) + "px";
-  }
-  function updateTrailProgress() {
-    if (!trailGlow || !glowLen) return;
-    var maxFrac = 0;
-    activities.forEach(function (a) {
-      var done = countDone(a.id) > 0, skip = isSkipped(a.id);
-      var el = trailNodeEls[a.id];
-      if (el) { el.classList.toggle("done", done); el.classList.toggle("skip", !done && skip); }
-      if (done || skip) maxFrac = Math.max(maxFrac, a.frac);
+  /* --------- the trail: first-person. A fixed marker; each land's stop-nodes flow
+     up past it as you scroll that land (no whole-day birds-eye map). --------- */
+  var marker, markerY = 0, flowDist = 600;
+  // place each land's nodes so node i sits at markerY + centerP·flowDist (before flow);
+  // updateSceneTrail then slides them up so each passes the marker at its reveal point.
+  function placeTrailNodes() {
+    marker = marker || $("marker");
+    var V = vh();
+    markerY = V * 0.5;                 // the fixed "you are here" line, mid-screen
+    flowDist = Math.max(260, V * 1.1); // how far a node travels across the land's scroll
+    scenes.forEach(function (s) {
+      if (!s.trailWrap) return;
+      var nodes = s.trailWrap.querySelectorAll(".trail-node");
+      for (var i = 0; i < nodes.length; i++) {
+        var cp = parseFloat(nodes[i].dataset.centerp) || 0.5;
+        nodes[i].style.top = (markerY + cp * flowDist).toFixed(1) + "px";
+      }
     });
-    trailGlow.style.strokeDashoffset = (glowLen * (1 - maxFrac)).toFixed(1);
+  }
+  // called per near-scene each frame: flow this land's nodes up past the fixed marker
+  function updateSceneTrail(scene, p) {
+    if (!scene.trailWrap) return;
+    scene.trailWrap.style.transform = "translateY(" + (-(p * flowDist)).toFixed(1) + "px) translateZ(0)";
+  }
+  // glow each land's nodes from completion state (gold = done, gray = skipped)
+  function updateTrailProgress() {
+    scenes.forEach(function (s) {
+      if (!s.trailNodes) return;
+      Object.keys(s.trailNodes).forEach(function (id) {
+        var el = s.trailNodes[id], done = countDone(id) > 0, skip = isSkipped(id);
+        el.classList.toggle("done", done);
+        el.classList.toggle("skip", !done && skip);
+      });
+    });
   }
 
   /* ----------------------------------------------------------- ahead-of-schedule */
@@ -653,7 +661,7 @@
     document.querySelectorAll(".layer[data-prop]").forEach(function (el) {
       var name = el.dataset.prop; if (!name) return;
       if (svgCache[name]) { el.innerHTML = svgCache[name]; setPA(el); return; }
-      fetch("assets/disney/" + name + ".svg?v=11").then(function (r) { return r.ok ? r.text() : ""; })
+      fetch("assets/disney/" + name + ".svg?v=12").then(function (r) { return r.ok ? r.text() : ""; })
         .then(function (t) { if (t) { svgCache[name] = t; el.innerHTML = t; setPA(el); } }).catch(function () {});
     });
   }
