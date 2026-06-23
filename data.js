@@ -99,7 +99,7 @@ const TRIP = {
       stay: { name: "Marriott Anaheim", map: "Marriott Anaheim", coords: { lat: 33.8025, lon: -117.9219 } },
       drive: "Park hours ~8am–midnight (check the app the night before)",
 
-      experience: { href: "disney.html", label: "Launch Disneyland Experience", sub: "Live timeline · ride quests · synced across all 4 phones" },
+      experience: { href: "disney.html", label: "Launch Disneyland Experience", sub: "Live timeline · ride quests · synced across all 6 phones" },
 
       schedule: [
         { time: "8 AM", text: "Rope drop at Disneyland — book a Lightning Lane the moment you tap in" },
