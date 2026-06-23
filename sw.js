@@ -1,5 +1,5 @@
 /* Service worker — offline shell + notification handling for the Park Day map. */
-var CACHE = "parkday-v3";
+var CACHE = "parkday-v4";
 var CORE = [
   "disney.html", "disney.css", "disney.js", "disney-data.js",
   "firebase-config.js", "manifest.webmanifest",

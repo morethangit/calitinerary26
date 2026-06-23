@@ -2,7 +2,7 @@
 
 Findings from auditing the live codebase (no build step; static HTML/CSS/JS + Firebase Realtime Database). Ordered by expected impact.
 
-## 1. Oversized "photo-traced" land SVGs (critical, biggest win)
+## 1. Oversized "photo-traced" land SVGs (critical, biggest win) — ✅ done
 
 `disney.js` already identifies this exact problem in a comment (line ~656-660): SVGs with thousands of `<path>` elements are expensive to inject/animate every scroll frame, so `castle.svg` (785 KB) was converted to `castle.webp` (517 KB) and is loaded as a raster `<img>` via `RASTER_PROPS`. That fix was **never extended to the other oversized land illustrations**, which are still fetched and `innerHTML`-injected as live SVG on every scene load:
 
@@ -17,11 +17,19 @@ Findings from auditing the live codebase (no build step; static HTML/CSS/JS + Fi
 
 These five files alone are ~8.5 MB of network payload and DOM/paint cost for a single mobile page. Each one parses into thousands of path nodes that get transformed/composited on every `requestAnimationFrame` in `applyMotion`/`onScroll`.
 
-**Plan:** rasterize the remaining five (and any future "prop" art) the same way `castle` was handled:
-- Export each as WebP/AVIF at the actual display resolution (a few hundred KB → tens of KB is realistic for these).
-- Add each name to `RASTER_PROPS` in `disney.js` (one-line change per asset, code path already exists).
-- Keep the original SVG only as the source-of-truth design file outside `assets/disney/` (or move to a `design-source/` folder so it isn't shipped).
-- Verify on a low-end device / throttled CPU that scroll jank disappears (this was the original motivation for the castle fix).
+**Done:** rasterized the remaining five the same way `castle` was handled — rendered each SVG to WebP at 2x the scene's display width (matching `castle.webp`'s existing scale), added all five to `RASTER_PROPS` in `disney.js`, removed the now-unused source SVGs (plus the already-orphaned `castle.svg`), bumped `disney.js`'s cache-busting query param and the service worker's `CACHE` name so clients pick up the change.
+
+| asset | before | after |
+|---|---|---|
+| `haunted-mansion` | 4.3 MB SVG | 875 KB WebP |
+| `galaxys-edge` | 1.8 MB SVG | 593 KB WebP |
+| `cafe-orleans` | 1.0 MB SVG | 555 KB WebP |
+| `matterhorn` | 709 KB SVG | 420 KB WebP |
+| `space-mountain` | 694 KB SVG | 340 KB WebP |
+
+`assets/disney/` dropped from ~9.2 MB to ~3.4 MB. More importantly, every land scene now composites a single raster `<img>` instead of injecting and animating thousands of `<path>` nodes per scroll frame — this is the change that should actually fix the scroll jank, not just the transfer size.
+
+Note: no headless browser was available in this environment to capture a visual before/after, so scroll-smoothness should still be spot-checked on a real device.
 
 ## 2. Service worker precache list vs. asset weight
 
