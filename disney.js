@@ -343,7 +343,10 @@
     var q = questById(id);
     GKEYS.forEach(function (g, i) {
       var pip = el.querySelectorAll(".pip")[i];
-      if (pip) pip.classList.toggle("on", isDone(id, g));
+      if (!pip) return;
+      var on = isDone(id, g);
+      pip.classList.toggle("on", on);
+      pip.style.background = on ? gColor(g) : "";   // reflect each person's chosen color
     });
     var n = countDone(id), skip = isSkipped(id);
     el.classList.toggle("complete", n === GKEYS.length);
@@ -514,7 +517,7 @@
         var q = Math.max(0, p - enter);
         scale = 1 + q * 0.26 * depth + (zoom ? q * 0.7 * depth : 0);
         ty = -q * 12 * depth;                // gentle continuous parallax rise
-        op = enter > 0 ? clamp((p - enter) / 0.12, 0, 1) : 1;
+        op = enter > 0 ? clamp((p - enter) / 0.22, 0, 1) : 1;   // gentle rise (matterhorn behind space mtn)
         var ex = clamp((p - leave) / Math.max(0.001, 1 - leave), 0, 1);   // exit only in the tail
         if (ex > 0) {
           var exit = L.dataset.exit || "fade";

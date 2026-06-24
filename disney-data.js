@@ -65,7 +65,7 @@ window.DISNEY_DAY = {
     /* a second prop that emerges as the first one clears (enter/leave are scene
        progress 0–1). Space Mountain lifts off, the Matterhorn rises behind it. */
     landmark2: {
-      "morning-sweep": { prop: "matterhorn", enter: 0.40, leave: 0.84, exit: "left", depth: 1 },
+      "morning-sweep": { prop: "matterhorn", enter: 0.52, leave: 0.86, exit: "left", depth: 1 },
     },
     /* lands that get a slow orbiting decoration the viewport passes */
     orbit: ["morning-sweep", "galaxys-edge", "wind-down"],
