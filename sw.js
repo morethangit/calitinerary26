@@ -1,9 +1,12 @@
 /* Service worker — offline shell + notification handling for the Park Day map. */
-var CACHE = "parkday-v3";
+var CACHE = "parkday-v4";
 var CORE = [
   "disney.html", "disney.css", "disney.js", "disney-data.js",
   "firebase-config.js", "manifest.webmanifest",
   "assets/disney/app-icon.svg",
+  "assets/disney/castle.webp?v=1", "assets/disney/haunted-mansion.webp?v=1",
+  "assets/disney/galaxys-edge.webp?v=1", "assets/disney/cafe-orleans.webp?v=1",
+  "assets/disney/matterhorn.webp?v=1", "assets/disney/space-mountain.webp?v=1",
 ];
 
 self.addEventListener("install", function (e) {

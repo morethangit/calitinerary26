@@ -818,7 +818,10 @@
   // raster image instead of injected as live SVG — animating/masking that many DOM
   // nodes every scroll frame is the single biggest cause of scroll jank, while a
   // raster image transforms/composites at a fixed, cheap cost.
-  var RASTER_PROPS = { castle: "webp" };
+  var RASTER_PROPS = {
+    castle: "webp", "haunted-mansion": "webp", "galaxys-edge": "webp",
+    "cafe-orleans": "webp", matterhorn: "webp", "space-mountain": "webp"
+  };
   // bottom-anchor each prop so it stands on the ground regardless of aspect ratio;
   // the two Main Street rows anchor to their outer edge so they hug the sides.
   function setPA(el) {
