@@ -316,7 +316,7 @@
     trailEl.appendChild(trailWrap);
     stage.insertBefore(trailEl, title);
 
-    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "block", block: block, phase: M.sky[block.id] || "midday", name: block.title, fontKey: fontKey, motion: motion, beats: beats, trailWrap: trailWrap, trailNodes: trailNodes, layers: layers });
+    scenes.push({ el: sh.sec, stage: stage, back: sh.back, kind: "block", block: block, phase: M.sky[block.id] || "midday", name: block.title, fontKey: fontKey, motion: motion, beats: beats, trailEl: trailEl, trailWrap: trailWrap, trailNodes: trailNodes, layers: layers });
   }
 
   var signEls = {};
@@ -507,8 +507,8 @@
         op = clamp(1 - (p - 0.20) / 0.45, 0, 1);
       } else {
         var zoom = scene.motion === "zoom";
-        rot = scene.motion === "sway" ? Math.sin(p * Math.PI * 2) * 2
-            : scene.motion === "orbit" ? (p * 4 - 2) : 0;
+        rot = scene.motion === "sway" ? Math.sin(p * Math.PI * 2) * 0.8
+            : scene.motion === "orbit" ? (p * 2 - 1) : 0;
         var enter = parseFloat(L.dataset.enter) || 0;
         var leave = L.dataset.leave != null ? parseFloat(L.dataset.leave) : 0.80;
         var q = Math.max(0, p - enter);
@@ -579,14 +579,38 @@
   }
   function sceneTop(i) { return scenes[i] ? (scenes[i].top != null ? scenes[i].top : scenes[i].el.offsetTop) : 0; }
   function sceneH(i) { return scenes[i] ? (scenes[i].h != null ? scenes[i].h : scenes[i].el.offsetHeight) : vh(); }
+  // scenes land 18% in so the header is settled; the journal (passport) lands at its very
+  // top so its content reads from the first line with no empty overshoot below.
+  function sceneScrollY(i) { return sceneTop(i) + (scenes[i].kind === "passport" ? 0 : sceneH(i) * 0.18); }
+  // a custom ease-in-out scroll so nav taps glide rather than snap (native "smooth" felt abrupt)
+  var scrollAnim = null;
+  function reducedMotion() {
+    return document.body.classList.contains("reduce-fx") ||
+      (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+  function animateScrollTo(targetY, dur) {
+    targetY = Math.max(0, Math.round(targetY));
+    if (scrollAnim) { cancelAnimationFrame(scrollAnim); scrollAnim = null; }
+    if (reducedMotion()) { window.scrollTo(0, targetY); onScroll(); return; }
+    var startY = window.scrollY, dist = targetY - startY, t0 = performance.now();
+    dur = dur || clamp(Math.abs(dist) * 0.45, 380, 760);
+    function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }   // easeInOutCubic
+    function frame(now) {
+      var t = clamp((now - t0) / dur, 0, 1);
+      window.scrollTo(0, Math.round(startY + dist * ease(t)));
+      if (t < 1) scrollAnim = requestAnimationFrame(frame); else { scrollAnim = null; onScroll(); }
+    }
+    scrollAnim = requestAnimationFrame(frame);
+  }
   function scrollToScene(i, smooth) {
     if (!scenes[i]) return;
-    window.scrollTo({ top: sceneTop(i) + sceneH(i) * 0.18, behavior: smooth === false ? "auto" : "smooth" });
+    var y = sceneScrollY(i);
+    if (smooth === false) { window.scrollTo(0, y); onScroll(); } else animateScrollTo(y);
   }
   // crossfade jump: fade a curtain in, hop the scroll behind it, fade back out — never a long jarring scroll
   function jumpTo(i) {
     if (!scenes[i]) return;
-    var target = sceneTop(i) + sceneH(i) * 0.18;
+    var target = sceneScrollY(i);
     if (Math.abs(target - window.scrollY) < vh() * 0.9) { scrollToScene(i); return; } // close: just smooth-scroll
     var curtain = $("curtain");
     curtain.classList.add("show");
@@ -613,7 +637,7 @@
       });
     }
   }
-  function smoothTo(y) { window.scrollTo({ top: Math.max(0, Math.round(y)), behavior: "smooth" }); }
+  function smoothTo(y) { animateScrollTo(y); }
   // up/down circles step one activity at a time (Indiana Jones → "tap in, book Space Mountain")
   function navToActivity(dir) {
     if (!activities.length) { scrollToScene(clamp(active + (dir > 0 ? 1 : -1), 0, scenes.length - 1)); return; }
@@ -650,6 +674,8 @@
   function updateSceneTrail(scene, p) {
     if (!scene.trailWrap) return;
     scene.trailWrap.style.transform = "translateY(" + (-(p * flowDist)).toFixed(1) + "px) translateZ(0)";
+    // the dotted line + dots fade out over each land's tail, so it's gone by Our Day
+    if (scene.trailEl) scene.trailEl.style.opacity = (p > 0.8 ? clamp(1 - (p - 0.8) / 0.2, 0, 1) : 1).toFixed(2);
   }
   // glow each land's nodes from completion state (gold = done, gray = skipped)
   function updateTrailProgress() {
@@ -736,13 +762,13 @@
   function passBar(c, color) {
     var pct = c.coreTotal ? Math.min(1, c.coreDone / c.coreTotal) : 0;
     var cls = "pass-bar" + (c.complete ? " done" : "");
-    var fill = '<span class="pb-fill" style="width:' + (pct * 100).toFixed(1) + '%;background:' + (c.complete ? "" : color) + '"></span>';
-    var bonus = c.bonusDone > 0 ? '<span class="pb-bonus">+' + c.bonusDone + '</span>' : "";
+    var fill = '<span class="pb-fill" style="width:' + (pct * 100).toFixed(1) + '%;' + (c.complete ? "" : "background:" + color) + '"></span>';
+    var bonus = c.bonusDone > 0 ? ' <i class="pb-bonus">+' + c.bonusDone + '</i>' : "";
     return '<div class="' + cls + '">' +
       '<span class="pb-ic">' + svg(c.icon) + '</span>' +
       '<span class="pb-label">' + c.label + '</span>' +
       '<span class="pb-track">' + fill + '</span>' +
-      '<span class="pb-n">' + c.coreDone + '/' + c.coreTotal + (c.complete ? ' ✓' : '') + '</span>' + bonus +
+      '<span class="pb-n">' + c.coreDone + '/' + c.coreTotal + (c.complete ? ' ✓' : '') + bonus + '</span>' +
       '</div>';
   }
 
@@ -757,7 +783,7 @@
       '<span class="pass-total">' + st.score + '<small>pts</small></span></div>';
     // overall day-completion master bar
     html += '<div class="pass-master"><span class="pm-fill" style="width:' + (st.pct * 100).toFixed(1) + '%;background:' + color + '"></span></div>' +
-      '<div class="pass-meta"><span>' + st.coreDone + '/' + st.coreTotal + ' of the day</span>' +
+      '<div class="pass-meta"><span>' + st.coreDone + '/' + st.coreTotal + ' total rides</span>' +
       (st.bonus > 0 ? '<span class="pass-bonusmeta">' + svg("bonus") + st.bonus + ' bonus magic</span>' : '') + '</div>';
     html += '<div class="pass-stats">';
     st.cats.forEach(function (c) { html += passBar(c, color); });
@@ -799,16 +825,27 @@
     // faux stack + reveal
     var others = ranked.filter(function (r) { return r.g !== mine; });
     html += '<div class="pass-others' + (passShowOthers ? " open" : "") + '">';
-    html += '<button class="pass-reveal" id="passReveal"><span class="pr-stack" aria-hidden="true"><i></i><i></i><i></i></span>' +
-      (passShowOthers ? "Hide everyone's books" : "See everyone's books") + '</button>';
-    html += '<div class="pass-others-list">';
+    html += '<button class="pass-reveal" id="passReveal"><span class="pr-label">' +
+      (passShowOthers ? "Hide everyone's books" : "See everyone's books") +
+      '</span><span class="pr-stack" aria-hidden="true"><i></i><i></i></span></button>';
+    html += '<div class="pass-others-list"><div class="pass-others-inner">';
     others.forEach(function (r) { html += passCard(r.g, rankOf[r.g], false); });
-    html += '</div></div>';
+    html += '</div></div></div>';
 
     html += '<button class="pass-foot linkish" id="passMap">' + svg("map") + ' Back to the map</button>';
     el.innerHTML = html;
 
-    var rv = $("passReveal"); if (rv) rv.addEventListener("click", function () { passShowOthers = !passShowOthers; renderPassport(); });
+    var rv = $("passReveal");
+    if (rv) rv.addEventListener("click", function () {
+      // toggle the class on the live node (don't re-render) so the CSS height transition runs
+      passShowOthers = !passShowOthers;
+      var box = el.querySelector(".pass-others");
+      if (box) box.classList.toggle("open", passShowOthers);
+      var lbl = rv.querySelector(".pr-label");
+      if (lbl) lbl.textContent = passShowOthers ? "Hide everyone's books" : "See everyone's books";
+      // the section grew/shrank — re-measure once it settles so scroll math stays correct
+      setTimeout(measure, 480);
+    });
     var pm = $("passMap"); if (pm) pm.addEventListener("click", function () { jumpTo(nowSceneIndex()); });
   }
 
