@@ -184,7 +184,7 @@ button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-hi
 .app {
   max-width: 680px;
   margin: 0 auto;
-  padding: 0 14px calc(var(--bar-h) + 28px);
+  padding: env(safe-area-inset-top) 14px calc(var(--bar-h) + 28px);
   min-height: 100dvh;
 }
 
