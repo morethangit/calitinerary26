@@ -254,7 +254,14 @@ button, a, .bottom-bar, .today-jump { touch-action: manipulation; -webkit-tap-hi
   padding: 20px 22px 12px;
   background: rgba(0, 0, 0, 0.14);
   border-radius: 0 0 var(--radius) var(--radius);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
+a.hero-route:hover { background: rgba(0, 0, 0, 0.22); }
+a.hero-route:active { background: rgba(0, 0, 0, 0.28); }
 .hero-route-track {
   display: flex;
   align-items: center;
