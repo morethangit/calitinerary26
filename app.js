@@ -206,7 +206,11 @@
     if (metaTop.children.length) meta.appendChild(metaTop);
 
     if (day.drive && day.drive.from && day.drive.to) {
-      const route = el("div", "hero-route");
+      const route = el("a", "hero-route");
+      route.href = "https://www.google.com/maps/dir/?api=1&origin=" + encodeURIComponent(day.drive.from) + "&destination=" + encodeURIComponent(day.drive.to);
+      route.target = "_blank";
+      route.rel = "noopener noreferrer";
+      route.setAttribute("aria-label", "Open route: " + day.drive.from + " to " + day.drive.to + " in Maps");
       route.innerHTML =
         '<div class="hero-route-track">' +
           '<span class="hero-route-dot"></span>' +
