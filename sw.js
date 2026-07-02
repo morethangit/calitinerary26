@@ -1,5 +1,5 @@
 /* Service worker — offline shell + notification handling for the Park Day map. */
-var CACHE = "parkday-v7";
+var CACHE = "parkday-v8";
 var CORE = [
   /* ---- main itinerary app ---- */
   "/", "index.html", "app.js", "styles.css", "data.enc.js", "config.js", "weather.js",
