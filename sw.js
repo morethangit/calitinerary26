@@ -1,11 +1,14 @@
 /* Service worker — offline shell + notification handling for the Park Day map. */
-var CACHE = "parkday-v5";
+var CACHE = "parkday-v7";
 var CORE = [
   /* ---- main itinerary app ---- */
   "/", "index.html", "app.js", "styles.css", "data.enc.js", "config.js", "weather.js",
+  /* ---- shared app icon ---- */
+  "manifest.webmanifest", "assets/app-icon-32.png", "assets/app-icon-180.png",
+  "assets/app-icon-192.png", "assets/app-icon-512.png",
   /* ---- disney quest ---- */
   "disney.html", "disney.css", "disney.js", "disney-data.js",
-  "firebase-config.js", "manifest.webmanifest",
+  "firebase-config.js",
   "assets/disney/app-icon.svg",
   "assets/disney/castle.webp?v=1", "assets/disney/haunted-mansion.webp?v=1",
   "assets/disney/galaxys-edge.webp?v=1", "assets/disney/cafe-orleans.webp?v=1",

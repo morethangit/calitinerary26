@@ -85,7 +85,16 @@ const TRIP = {
         "Set alarms early — you want to be tapping into the park by 8–9am.",
       ],
 
-      funFact: { q: "When did Disneyland first open its gates?", url: "https://en.wikipedia.org/wiki/Disneyland" },
+      packing: [
+        "Sunscreen (reef-safe, travel + full size) — reapply every 2 hrs at Disney, the beach, and Big Sur",
+        "Grip / traction shoes for the Mist Trail (Day 8) — the granite steps are constantly wet with waterfall spray",
+        "Swimsuits + quick-dry towel for Pismo Beach and Oceano Dunes",
+        "Warm layers for Tuolumne Meadows (Day 9) and SF fog (Days 10–11) — both run 20–30°F cooler than the coast",
+        "Refillable water bottles — Yosemite hikes and the Big Sur stops don't have reliable refill points",
+        "Portable phone charger / battery pack for Disney park days and the Big Sur no-service stretch",
+        "Light rain shell or poncho — afternoon mist at Mist Trail and marine layer drizzle in SF",
+        "Comfortable broken-in walking shoes for both Disney days (expect 6–10+ miles)",
+      ],
     },
 
     /* ===================== DAY 2 ===================== */
@@ -132,8 +141,6 @@ const TRIP = {
         "Tap your Lightning Lane Multi Pass the second you enter — the best return times go fast.",
         "Blue Bayou and World of Color both reward booking ahead in the app.",
       ],
-
-      funFact: { q: "Why is Disneyland's Pirates ride considered Walt's masterpiece?", url: "https://en.wikipedia.org/wiki/Pirates_of_the_Caribbean_(attraction)" },
     },
 
     /* ===================== DAY 3 ===================== */
@@ -168,8 +175,6 @@ const TRIP = {
         "Montaña de Oro State Park is close by if anyone wants a bonus hike.",
         "Splash Cafe gets a line — go early for that bread bowl.",
       ],
-
-      funFact: { q: "Why is Pismo Beach nicknamed the 'Clam Capital of the World'?", url: "https://en.wikipedia.org/wiki/Pismo_Beach,_California" },
     },
 
     /* ===================== DAY 4 ===================== */
@@ -203,8 +208,6 @@ const TRIP = {
         "ATV/OHV rentals fill fast in July — call the night before or book online.",
         "Pack a cooler lunch for the dunes; there's not much out there.",
       ],
-
-      funFact: { q: "Where is the only California state beach you can legally drive on?", url: "https://en.wikipedia.org/wiki/Oceano_Dunes_State_Vehicular_Recreation_Area" },
     },
 
     /* ===================== DAY 5 ===================== */
@@ -239,8 +242,6 @@ const TRIP = {
         "Pack tonight — tomorrow's Big Sur drive is long with lots of stops.",
         "Ember is popular for a nicer night out — reserve if you want it.",
       ],
-
-      funFact: { q: "Why do thousands of monarch butterflies winter in Pismo Beach?", url: "https://en.wikipedia.org/wiki/Pismo_State_Beach" },
     },
 
     /* ===================== DAY 6 ===================== */
@@ -263,7 +264,7 @@ const TRIP = {
         { time: "11:00 AM", text: "Lunch at Nepenthe — cliffside terrace, 1,000-ft ocean views, ~1 hr" },
         { time: "12:35 PM", text: "Pfeiffer Beach — purple-sand beach with Keyhole Rock arch, ~1.5 hrs (parking buffer built in)" },
         { time: "2:25 PM", text: "Pfeiffer Big Sur State Park — pick 1–2 hikes: Pfeiffer Falls + Valley View Overlook combo (~1–1.25 hrs) or the River Gorge Trail (~1.5–2 hrs), ~1.5 hrs" },
-        { time: "5:05 PM", text: "Bixby Bridge — the classic shot, plus several unmarked pullouts (Hurricane Point, Point Sur) on the drive north, ~30 min total" },
+        { time: "5:05 PM", text: "Bixby Creek Bridge — the classic shot, plus several unmarked pullouts (Hurricane Point, Point Sur) on the drive north, ~30 min total" },
         { time: "5:40 PM", text: "Garrapata State Park — golden hour on the coastal bluffs, ~2 hrs (closes at sunset ~8:20–8:25 PM in late July — keep it to the short bluffs loop)" },
         { time: "8:00 PM", text: "Arrive Monterey — check into Embassy Suites" },
       ],
@@ -310,8 +311,6 @@ const TRIP = {
         "Garrapata closes at sunset — late July that's ~8:20–8:25 PM. You're arriving at 8:18 PM, so keep it to the short coastal bluffs loop (Soberanes Point & Whale Peak, ~1–1.5 hrs). If you're running late, skip it entirely.",
         "Monterey arrival is ~8:38 PM — call Passionfish to push the reservation back, or cancel in favor of something casual on Cannery Row.",
       ],
-
-      funFact: { q: "How long did it take to build the Bixby Creek Bridge in 1932?", url: "https://en.wikipedia.org/wiki/Bixby_Creek_Bridge" },
     },
 
     /* ===================== DAY 7 ===================== */
@@ -351,8 +350,6 @@ const TRIP = {
         "Arrive at Point Lobos by 8am — the small lots fill quickly.",
         "No park reservation needed at the Hwy 140 / Arch Rock entrance in 2026.",
       ],
-
-      funFact: { q: "When did Yosemite officially become a national park?", url: "https://en.wikipedia.org/wiki/Yosemite_National_Park" },
     },
 
     /* ===================== DAY 8 ===================== */
@@ -386,8 +383,6 @@ const TRIP = {
         "There's no water at the upper falls — pack plenty of water and snacks.",
         "Start by 7:30–8am to beat both crowds and afternoon heat.",
       ],
-
-      funFact: { q: "How tall is Nevada Falls — and where does its name come from?", url: "https://en.wikipedia.org/wiki/Nevada_Fall" },
     },
 
     /* ===================== DAY 9 ===================== */
@@ -424,8 +419,6 @@ const TRIP = {
         "This is the 'earn your views' day — totally different feel from the Valley, don't skip it.",
         "Pack a substantial lunch; you'll be out for the full day.",
       ],
-
-      funFact: { q: "Why is Tioga Road one of the highest mountain passes in California?", url: "https://en.wikipedia.org/wiki/Tioga_Pass" },
     },
 
     /* ===================== DAY 10 ===================== */
@@ -467,8 +460,6 @@ const TRIP = {
         "Leave by 6:15–6:30am — Glacier Point Road parking fills fast.",
         "Knock out the hike first, then it's a clean run to the city.",
       ],
-
-      funFact: { q: "What's the official name of the Golden Gate Bridge's orange color?", url: "https://en.wikipedia.org/wiki/Golden_Gate_Bridge" },
     },
 
     /* ===================== DAY 11 ===================== */
@@ -508,8 +499,6 @@ const TRIP = {
         "11:56 PM departure: give yourself 2+ hrs, so head to BART by ~9:30pm.",
         "BART beats Uber for 5 people with bags — $9/person and no traffic.",
       ],
-
-      funFact: { q: "How does the California Academy of Sciences' 'living roof' work?", url: "https://en.wikipedia.org/wiki/California_Academy_of_Sciences" },
     },
 
   ],

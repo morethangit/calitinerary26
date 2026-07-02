@@ -72,7 +72,7 @@ window.DISNEY_DAY = {
 
     /* v3 — the party. Six guests; names editable in-app (synced under
        disney2026/party). Each attraction tracks each guest independently. */
-    party: ["Nolan", "Friend 2", "Friend 3", "Friend 4", "Matthew", "Isaac"],
+    party: ["Nolan", "Aurora", "Crystal", "Clara", "Matthew", "Isaac"],
 
     /* v3 — per-land personality.
        motion: the animation language of the scene

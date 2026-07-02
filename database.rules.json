@@ -2,6 +2,7 @@
   "rules": {
     "disney2026":      { ".read": true, ".write": true },
     "disney2026_test": { ".read": true, ".write": true },
+    "roadtrip2026":    { ".read": true, ".write": true },
     "$other": { ".read": false, ".write": false }
   }
 }

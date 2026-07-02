@@ -63,7 +63,7 @@ Then share `YOUR-NEW-PASSCODE` with the family (text/WhatsApp, not on the site).
 ```
 
 Each day always has the same sections: **Day → Schedule → Locations → Links →
-Tips** (plus a fun fact and collapsible confirmation numbers). Day colors come from
+Tips** (plus collapsible confirmation numbers). Day colors come from
 the `theme` field: `anaheim` (blue) · `pismo` (yellow) · `bigsur` (orange) ·
 `yosemite` (green) · `sf` (red).
 

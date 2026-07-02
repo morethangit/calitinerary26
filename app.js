@@ -18,6 +18,25 @@
   let days = [];
   let SECRETS = {};
 
+  /* ---------- hidden test mode — fakes "now" for demoing TODAY/is-now ---------- */
+  const TEST_KEY = "trip_test_override";
+  let testOverride = null;
+  (function loadTestOverride() {
+    try {
+      const raw = localStorage.getItem(TEST_KEY);
+      if (raw) { const d = new Date(raw); if (!isNaN(d)) testOverride = d; }
+    } catch (e) {}
+  })();
+  function getNow() { return testOverride || new Date(); }
+  function setTestOverride(d) {
+    testOverride = d;
+    try { localStorage.setItem(TEST_KEY, d.toISOString()); } catch (e) {}
+  }
+  function clearTestOverride() {
+    testOverride = null;
+    try { localStorage.removeItem(TEST_KEY); } catch (e) {}
+  }
+
   /* ---------- date helpers (all in local time, date-only) ---------- */
   function ymd(d) {
     return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -27,7 +46,7 @@
     return new Date(y, m - 1, d);
   }
   function todayDate() {
-    const n = new Date();
+    const n = getNow();
     return new Date(n.getFullYear(), n.getMonth(), n.getDate());
   }
   function daysBetween(a, b) {
@@ -37,6 +56,14 @@
   function prettyDate(s) {
     const d = parseDate(s);
     return MONTHS[d.getMonth()] + " " + d.getDate();
+  }
+  // "9:20 AM" -> minutes since midnight; non-clock labels ("Evening", "Optional") return null
+  function parseClockTime(t) {
+    const m = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(String(t || "").trim());
+    if (!m) return null;
+    let h = parseInt(m[1], 10) % 12;
+    if (/pm/i.test(m[3])) h += 12;
+    return h * 60 + parseInt(m[2], 10);
   }
 
   /* ---------- link builders ---------- */
@@ -173,9 +200,11 @@
 
     /* hero */
     const hero = el("header", "hero");
-    hero.appendChild(el("div", "hero-eyebrow",
+    const eyebrow = el("div", "hero-eyebrow",
       "Day " + day.num + " · " + day.weekday +
-      (isToday(day) ? '<span class="hero-today">TODAY</span>' : "")));
+      (isToday(day) ? '<span class="hero-today">TODAY</span>' : ""));
+    if (day.num === 1) eyebrow.addEventListener("click", openTestModePopup);
+    hero.appendChild(eyebrow);
     hero.appendChild(el("h1", null, esc(day.title)));
     if (day.tagline) hero.appendChild(el("p", "hero-tagline", esc(day.tagline)));
 
@@ -244,6 +273,11 @@
     if (day.schedule && day.schedule.length) {
       const sec = section("🗓️", "Schedule");
       const ul = el("ul", "timeline");
+      // on the current day, highlight the most recent item whose clock time has passed
+      const now = getNow();
+      const nowMinutes = isToday(day) ? now.getHours() * 60 + now.getMinutes() : null;
+      let nowLi = null;
+      const mentionCandidates = locMentionCandidates(day.locations);
       day.schedule.forEach(s => {
         const item = (typeof s === "string") ? { text: s } : s;
         const li = el("li");
@@ -251,9 +285,18 @@
           li.classList.add("has-time");
           li.appendChild(el("span", "t-time", esc(item.time)));
         }
-        li.appendChild(el("span", "t-text", esc(item.text)));
+        const textSpan = el("span", "t-text", locMentionHTML(item.text, mentionCandidates, day.date));
+        li.appendChild(textSpan);
+        textSpan.querySelectorAll(".loc-mention").forEach(btn => {
+          btn.addEventListener("click", () => jumpToLocation(btn.dataset.locTarget));
+        });
         ul.appendChild(li);
+        if (nowMinutes != null) {
+          const mins = parseClockTime(item.time);
+          if (mins != null && mins <= nowMinutes) nowLi = li;
+        }
       });
+      if (nowLi) nowLi.classList.add("is-now");
       sec.appendChild(wrapCard(ul));
       card.appendChild(sec);
     }
@@ -262,7 +305,7 @@
     if (day.locations && day.locations.length) {
       const sec = section("📍", "Locations");
       const list = el("div", "loc-list");
-      day.locations.forEach(loc => list.appendChild(locationEl(loc)));
+      day.locations.forEach((loc, idx) => list.appendChild(locationEl(loc, day.date, idx)));
       sec.appendChild(list);
       card.appendChild(sec);
     }
@@ -293,16 +336,17 @@
       card.appendChild(sec);
     }
 
-    /* FUN FACT */
-    if (day.funFact && day.funFact.q) {
-      const ff = el("a", "funfact");
-      ff.href = day.funFact.url; ff.target = "_blank"; ff.rel = "noopener";
-      ff.innerHTML =
-        '<span class="ff-ic">🤓</span>' +
-        '<span class="ff-body"><span class="ff-label">Fun fact</span>' +
-        '<div class="ff-q">' + esc(day.funFact.q) + "</div></span>" +
-        '<span class="ff-go">↗</span>';
-      card.appendChild(ff);
+    /* PACKING CHECKLIST — static, only present on the day(s) it's defined for */
+    if (day.packing && day.packing.length) {
+      const sec = section("🎒", "Packing Checklist");
+      const list = el("div", "tips packing");
+      day.packing.forEach(t => {
+        const row = el("div", "tip");
+        row.innerHTML = '<span class="tip-ic">☐</span><span>' + esc(t) + "</span>";
+        list.appendChild(row);
+      });
+      sec.appendChild(list);
+      card.appendChild(sec);
     }
 
     /* CONFIRMATIONS (collapsible) — decrypted alongside the itinerary */
@@ -376,18 +420,120 @@
     c.appendChild(child);
     return c;
   }
-  function locationEl(loc) {
+  /* ---------- linking schedule text mentions to their Locations card ---------- */
+  function locElId(dayDate, idx) { return "loc-day-" + dayDate + "-" + idx; }
+  // build search candidates per location, longest/most specific first, so a
+  // schedule mention resolves to the right card even when the wording doesn't
+  // match the location name exactly (word order swapped, or a trailing
+  // qualifier like "Trail"/"State Park" is dropped in the schedule text)
+  function locMentionCandidates(locations) {
+    const out = [];
+    (locations || []).forEach((loc, idx) => {
+      if (!loc.name) return;
+      const words = loc.name.trim().split(/\s+/);
+      const seen = new Set();
+      const add = phrase => {
+        const key = phrase.toLowerCase();
+        if (phrase && !seen.has(key)) { seen.add(key); out.push({ idx, text: phrase }); }
+      };
+      add(loc.name);
+      if (words.length === 2) add(words[1] + " " + words[0]);
+      for (let n = words.length - 1; n >= 2; n--) add(words.slice(0, n).join(" "));
+    });
+    return out.sort((a, b) => b.text.length - a.text.length);
+  }
+  // find non-overlapping candidate matches in schedule text and render it as
+  // escaped text with matched spans wrapped in tappable pills
+  function locMentionHTML(text, candidates, dayDate) {
+    if (!candidates.length) return esc(text);
+    const lower = text.toLowerCase();
+    const ranges = [];
+    candidates.forEach(c => {
+      const needle = c.text.toLowerCase();
+      let from = 0, pos;
+      while ((pos = lower.indexOf(needle, from)) !== -1) {
+        const end = pos + needle.length;
+        if (!ranges.some(r => pos < r.end && end > r.start)) ranges.push({ start: pos, end, idx: c.idx });
+        from = pos + 1;
+      }
+    });
+    if (!ranges.length) return esc(text);
+    ranges.sort((a, b) => a.start - b.start);
+    let html = "", cursor = 0;
+    ranges.forEach(r => {
+      if (r.start > cursor) html += esc(text.slice(cursor, r.start));
+      html += '<button type="button" class="loc-mention" data-loc-target="' + esc(locElId(dayDate, r.idx)) + '">' +
+        esc(text.slice(r.start, r.end)) + "</button>";
+      cursor = r.end;
+    });
+    if (cursor < text.length) html += esc(text.slice(cursor));
+    return html;
+  }
+  function jumpToLocation(targetId) {
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.classList.remove("flash");
+    void target.offsetWidth; // restart the animation if it's already mid-flash
+    target.classList.add("flash");
+    setTimeout(() => target.classList.remove("flash"), 900);
+  }
+
+  // "checked off" state for location cards — instant local write always,
+  // synced across everyone's phones via Firebase when it's reachable (same
+  // local-first pattern as the Disney stamp sync; degrades to local-only
+  // offline or if Firebase isn't configured).
+  function locDoneKey(dayDate, idx) { return dayDate + "_" + idx; }
+  function setLocDone(key, done) {
+    try { if (done) localStorage.setItem("loc-done:" + key, "1"); else localStorage.removeItem("loc-done:" + key); } catch (e) {}
+    if (locDB) locDB.child(key).set(done ? true : null).catch(() => {});
+  }
+  function locationEl(loc, dayDate, idx) {
     const url = resolveUrl(loc);
     const node = url ? el("a", "loc is-link") : el("div", "loc");
+    node.id = locElId(dayDate, idx);
     if (url) { node.href = url; node.target = "_blank"; node.rel = "noopener"; }
     const go = url ? (loc.trail ? '<span class="go">AllTrails ↗</span>' : '<span class="go">Map ↗</span>') : "";
+    const key = locDoneKey(dayDate, idx);
+    const done = localStorage.getItem("loc-done:" + key) === "1";
+    if (done) node.classList.add("is-done");
     node.innerHTML =
+      '<button type="button" class="loc-check" data-loc-key="' + esc(key) + '" aria-pressed="' + done + '" aria-label="Mark ' + esc(loc.name) + ' as done"></button>' +
       '<span class="loc-ic">' + (loc.icon || "📍") + "</span>" +
       '<span class="loc-body">' +
         '<span class="loc-name">' + esc(loc.name) + go + "</span>" +
         (loc.note ? '<span class="loc-note">' + esc(loc.note) + "</span>" : "") +
       "</span>";
+    node.querySelector(".loc-check").addEventListener("click", e => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isDone = node.classList.toggle("is-done");
+      e.currentTarget.setAttribute("aria-pressed", String(isDone));
+      setLocDone(key, isDone);
+    });
     return node;
+  }
+
+  /* ---------- optional Firebase sync for checked-off stops ---------- */
+  let locDB = null;
+  function initLocSync() {
+    try {
+      if (typeof firebase === "undefined") return;
+      const cfg = window.FIREBASE_CONFIG;
+      if (!cfg || !cfg.apiKey || cfg.apiKey === "REPLACE_ME") return;
+      if (!firebase.apps.length) firebase.initializeApp(cfg);
+      locDB = firebase.database().ref("roadtrip2026/locChecks");
+      locDB.on("value", snap => {
+        const remote = snap.val() || {};
+        document.querySelectorAll(".loc-check").forEach(btn => {
+          const key = btn.dataset.locKey;
+          const done = !!remote[key];
+          btn.closest(".loc").classList.toggle("is-done", done);
+          btn.setAttribute("aria-pressed", String(done));
+          try { if (done) localStorage.setItem("loc-done:" + key, "1"); else localStorage.removeItem("loc-done:" + key); } catch (e) {}
+        });
+      });
+    } catch (e) { locDB = null; }
   }
 
   /* ---------- bottom bar + back-to-today ---------- */
@@ -482,6 +628,44 @@
     else if (!gate.hidden) showGate(); // refresh countdown number
   });
 
+  /* ---------- hidden test mode popup (tap the Day 1 pill) ---------- */
+  function fmtDateInput(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function fmtTimeInput(d) { return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+  function updateTestModeBadge() { document.getElementById("testModeBadge").hidden = !testOverride; }
+  function openTestModePopup() {
+    const n = getNow();
+    document.getElementById("testDate").value = fmtDateInput(n);
+    document.getElementById("testTime").value = fmtTimeInput(n);
+    const active = !!testOverride;
+    document.getElementById("testModalBtn").textContent = active ? "Disable Test Mode" : "Enable Test Mode";
+    document.getElementById("testModalSub").textContent = active
+      ? "Test mode is on — pick a new date/time, or disable it below."
+      : "Preview the TODAY badge and schedule highlight as of any date/time.";
+    document.getElementById("testModal").hidden = false;
+  }
+  function closeTestModePopup() { document.getElementById("testModal").hidden = true; }
+  document.getElementById("testModalForm").addEventListener("submit", e => {
+    e.preventDefault();
+    if (testOverride) {
+      clearTestOverride();
+    } else {
+      const dateVal = document.getElementById("testDate").value;
+      if (!dateVal) return;
+      const timeVal = document.getElementById("testTime").value || "00:00";
+      const [y, m, d] = dateVal.split("-").map(Number);
+      const [hh, mm] = timeVal.split(":").map(Number);
+      setTestOverride(new Date(y, m - 1, d, hh, mm));
+    }
+    refreshToday();
+    current = todayIndex();
+    updateTestModeBadge();
+    closeTestModePopup();
+    if (!app.hidden) render(0);
+  });
+  document.getElementById("testModalCancel").addEventListener("click", closeTestModePopup);
+  document.getElementById("testModeBadge").addEventListener("click", openTestModePopup);
+  updateTestModeBadge();
+
   /* ---------- boot ----------
        • Cached passcode on this device → straight through.
        • Pre-trip & locked → public countdown (Peek then asks for the passcode).
@@ -515,4 +699,5 @@
   }
 
   boot();
+  initLocSync();
 })();

@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Park Day" />
   <title>A Park Day · Disneyland</title>
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="assets/disney/app-icon.svg" />
+  <link rel="apple-touch-icon" href="assets/app-icon-180.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Lobster+Two:wght@400;700&family=Righteous&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet" />
@@ -24,6 +24,15 @@
     <div id="tint"></div>
   </div>
 
+  <!-- shown instead of the scroll experience on tablet/desktop widths -->
+  <div id="desktopNotice" class="desktop-notice">
+    <div class="dn-icon">📱</div>
+    <h1 class="dn-title">Built for your phone</h1>
+    <p class="dn-msg">This one's meant to be held in hand, walking through the park. Pull it up there to play along live.</p>
+    <button id="dnLeaderboardBtn" class="enter-btn">🏆 See the Leaderboard</button>
+    <button id="dnItineraryBtn" class="dir-summary">← Back to Itinerary</button>
+  </div>
+
   <!-- the film: full-screen scenes injected by JS -->
   <main id="film"></main>
 
@@ -33,9 +42,12 @@
   <!-- the trail "you are here" marker — pinned mid-screen; each land's trail flows past it -->
   <div id="marker" aria-hidden="true"><span class="marker-core"></span><span class="marker-ring"></span></div>
 
-  <!-- top bar: directory · current land · settings -->
+  <!-- top bar: itinerary · directory · current land · settings -->
   <header id="topbar">
-    <button id="dirBtn" class="ghost-btn" aria-label="Park directory" data-icon="map"></button>
+    <div class="topbar-left">
+      <button id="itineraryBtn" class="ghost-btn" aria-label="Back to itinerary" data-icon="home"></button>
+      <button id="dirBtn" class="ghost-btn" aria-label="Park directory" data-icon="map"></button>
+    </div>
     <div id="nowPlate" class="now-plate"><span id="nowTime">8:00 AM</span><span id="nowLand">Main Street</span></div>
     <button id="setBtn" class="ghost-btn" aria-label="Settings" data-icon="gear"></button>
   </header>
@@ -112,6 +124,18 @@
       <div id="partyList" class="party-list"></div>
       <p class="party-hint">Which one is this phone?</p>
       <div id="partyMine" class="party-mine"></div>
+    </div>
+  </div>
+
+  <!-- "wrong day" confirmation -->
+  <div id="dateCheck" class="overlay" hidden>
+    <div class="overlay-scrim" data-close></div>
+    <div class="datecheck-body">
+      <p class="ded-eyebrow">Heads up</p>
+      <h1 class="datecheck-title">Today isn't your Disneyland day</h1>
+      <p class="datecheck-msg">Looks like today isn't July 17 — did you mean to open this?</p>
+      <button id="dateCheckBack" class="enter-btn">← Back to Itinerary</button>
+      <button class="dir-summary" data-close>Continue anyway</button>
     </div>
   </div>
 

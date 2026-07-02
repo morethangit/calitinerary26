@@ -51,6 +51,7 @@
     pumpkin: '<path d="M12 5c0-1.5 2-2 2-3M8 8c-3 1-4 4-3 7s4 4 7 4 6-1 7-4-1-6-4-7c-2-.7-5-.7-7 0z"/>',
     mermaid: '<circle cx="12" cy="5" r="2.4"/><path d="M12 8c-2 0-3 2-3 5 0 2-2 4-2 6 3 0 4-1 5-1s2 1 5 1c0-2-2-4-2-6 0-3-1-5-3-5z"/>',
     sword: '<path d="M4 20l3-1L18 8l-2-2L5 17zM16 6l2-3 3 3-3 2zM6 18l-2 2"/>',
+    home: '<path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/>',
   };
   // the picker offers these in order; label is shown in the onboarding grid
   var CHAR_ICONS = [
@@ -719,7 +720,12 @@
         passportVisible = entries[0].isIntersecting;
         var mk = marker || $("marker");
         if (mk) mk.classList.toggle("is-hidden", passportVisible || !(scenes[active] && scenes[active].trailWrap));
-      }, { threshold: 0 });
+        // hide the prev/next-activity navbar whenever the journal is on screen — there's no
+        // "next activity" after it, and the scroll-position "active scene" check in onScroll
+        // isn't reliable for this scene since it's auto-height, not a fixed 100dvh page
+        if (passportVisible) document.body.classList.add("at-end");
+        else if (!(scenes[active] && scenes[active].kind === "passport")) document.body.classList.remove("at-end");
+      }, { threshold: 0.15 });
       mo.observe(sec);
     }
     renderPassport();
@@ -825,12 +831,16 @@
     html += '<p class="pass-section">Your stamp book</p>';
     html += passCard(mine, rankOf[mine], true);
 
-    // faux stack + reveal
+    // faux stack + reveal — the stack is a preceding sibling (not a child of the
+    // button) so the button reliably paints on top via DOM order alone; negative
+    // z-index on a button child is inconsistent on iOS Safari with this much
+    // gradient/shadow around it, so we don't rely on it at all.
     var others = ranked.filter(function (r) { return r.g !== mine; });
     html += '<div class="pass-others' + (passShowOthers ? " open" : "") + '">';
+    html += '<span class="pr-stack" aria-hidden="true"><i></i><i></i></span>';
     html += '<button class="pass-reveal" id="passReveal"><span class="pr-label">' +
       (passShowOthers ? "Hide everyone's books" : "See everyone's books") +
-      '</span><span class="pr-stack" aria-hidden="true"><i></i><i></i></span></button>';
+      '</span></button>';
     html += '<div class="pass-others-list"><div class="pass-others-inner">';
     others.forEach(function (r) { html += passCard(r.g, rankOf[r.g], false); });
     html += '</div></div></div>';
@@ -1066,7 +1076,7 @@
     try { localStorage.setItem("disney_intro", "1"); } catch (e) {}
     var intro = $("intro"); intro.classList.add("gone");
     window.scrollTo(0, 0);
-    setTimeout(function () { intro.hidden = true; onScroll(); }, 850);
+    setTimeout(function () { intro.hidden = true; onScroll(); maybeShowDateCheck(); }, 850);
   }
   // step 2 — pick a character + completion color, then enter
   function introCustomize(g) {
@@ -1115,8 +1125,31 @@
     requestAnimationFrame(testLoop);
   }
 
+  /* ------------------------------------------------- desktop/tablet gate
+     the scroll experience is built phone-in-hand (100dvh scenes, parallax) —
+     at wider widths, CSS hides it in favor of the static #desktopNotice panel
+     and only the (still normally-built) #passport scene. Nothing else about
+     boot()/build() changes: renderPassport() and the Firebase/local-state
+     plumbing are reused completely as-is. */
+  var DESKTOP_BREAKPOINT = 700;
+  function setupDesktopGate() {
+    var isDesktop = window.innerWidth >= DESKTOP_BREAKPOINT;
+    document.body.classList.toggle("desktop-gate", isDesktop);
+    window.addEventListener("resize", function () {
+      if ((window.innerWidth >= DESKTOP_BREAKPOINT) !== isDesktop) location.reload();
+    });
+    var lb = $("dnLeaderboardBtn");
+    if (lb) lb.addEventListener("click", function () {
+      document.body.classList.add("dg-open");
+      var p = $("passport"); if (p) p.scrollIntoView({ behavior: "smooth" });
+    });
+    var ib = $("dnItineraryBtn");
+    if (ib) ib.addEventListener("click", function () { window.location.href = "index.html"; });
+  }
+
   /* ----------------------------------------------------------- boot */
   function boot() {
+    setupDesktopGate();
     hydrateIcons();
     sizeCanvas();
     build();
@@ -1131,6 +1164,8 @@
     buildDirectory(); buildParty(); syncSettings();
 
     // wiring
+    $("itineraryBtn").addEventListener("click", function () { window.location.href = "index.html"; });
+    $("dateCheckBack").addEventListener("click", function () { window.location.href = "index.html"; });
     $("dirBtn").addEventListener("click", function () { updateDirCounts(); openOverlay("directory"); });
     $("setBtn").addEventListener("click", function () { syncSettings(); openOverlay("settings"); });
     $("dirSummary").addEventListener("click", function () { closeOverlay("directory"); jumpTo(scenes.length - 1); });
@@ -1164,9 +1199,23 @@
     setTimeout(function () {
       measure();                                        // re-cache once fonts/layout settle
       onScroll();
-      if (!localStorage.getItem("disney_intro")) { window.scrollTo(0, 0); buildIntro(); $("intro").hidden = false; }
-      else scrollToScene(nowSceneIndex(), false);
+      var isDesktop = document.body.classList.contains("desktop-gate");
+      if (!isDesktop && !localStorage.getItem("disney_intro")) { window.scrollTo(0, 0); buildIntro(); $("intro").hidden = false; }
+      else if (!isDesktop) { scrollToScene(nowSceneIndex(), false); maybeShowDateCheck(); }
     }, 400);
+  }
+
+  // warn (once per tab session) if today isn't actually the Disney day — easy to
+  // open this by accident from the itinerary on some other day of the trip
+  var DISNEY_DAY_DATE = "2026-07-17";
+  function maybeShowDateCheck() {
+    if (test.active) return;
+    if (sessionStorage.getItem("disney_datecheck_shown")) return;
+    var n = new Date();
+    var today = n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0") + "-" + String(n.getDate()).padStart(2, "0");
+    if (today === DISNEY_DAY_DATE) return;
+    sessionStorage.setItem("disney_datecheck_shown", "1");
+    openOverlay("dateCheck");
   }
 
   // catch the live VQ deadline if the app is open across it (no scheduled timer fired)
