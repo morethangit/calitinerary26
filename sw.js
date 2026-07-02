@@ -1,6 +1,9 @@
 /* Service worker — offline shell + notification handling for the Park Day map. */
-var CACHE = "parkday-v4";
+var CACHE = "parkday-v5";
 var CORE = [
+  /* ---- main itinerary app ---- */
+  "/", "index.html", "app.js", "styles.css", "data.enc.js", "config.js", "weather.js",
+  /* ---- disney quest ---- */
   "disney.html", "disney.css", "disney.js", "disney-data.js",
   "firebase-config.js", "manifest.webmanifest",
   "assets/disney/app-icon.svg",
