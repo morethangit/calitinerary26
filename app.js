@@ -664,6 +664,14 @@
   });
   document.getElementById("testModalCancel").addEventListener("click", closeTestModePopup);
   document.getElementById("testModeBadge").addEventListener("click", openTestModePopup);
+  // Extra escape hatches: tap the backdrop or hit Escape to back out without
+  // enabling/disabling/cancelling via the form itself.
+  document.getElementById("testModal").addEventListener("click", e => {
+    if (e.target.id === "testModal") closeTestModePopup();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !document.getElementById("testModal").hidden) closeTestModePopup();
+  });
   updateTestModeBadge();
 
   /* ---------- boot ----------
